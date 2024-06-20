@@ -3,18 +3,16 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, onDone?: () => void) {
-    const process = cp.spawn(command, args, { shell: true });
-    outputChannel.appendLine(`Running: ${command} ${args.join(' ')}`);
+function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: () => void) {
+    const process = cp.spawn(command, args, { shell: true, cwd: cwd });
+    outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
 
     process.stdout.on('data', (data) => {
         outputChannel.appendLine(data.toString());
-        saveOutputToFile(command, data.toString());
     });
 
     process.stderr.on('data', (data) => {
         outputChannel.appendLine(data.toString());
-        saveOutputToFile(command, data.toString());
     });
 
     process.on('close', (code) => {
@@ -29,28 +27,57 @@ function runCargoCommand(command: string, args: string[], outputChannel: vscode.
     });
 }
 
-function saveOutputToFile(command: string, output: string) {
-    const outputFilePath = path.join(vscode.workspace.rootPath || '', `${command.replace(' ', '_')}_output.log`);
-    fs.appendFileSync(outputFilePath, output);
+function findCargoTomlDir(currentDir: string): string | null {
+    const rootDir = path.parse(currentDir).root;
+    let dir = currentDir;
+
+    while (dir !== rootDir) {
+        if (fs.existsSync(path.join(dir, 'Cargo.toml'))) {
+            return dir;
+        }
+        dir = path.dirname(dir);
+    }
+
+    return null;
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Rust Formatter and Linter Extension is now active!');
+    console.log('Rust Formatter and Linter Plus is now active!');
 
-    const outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter');
+    const outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter Plus');
 
     let formatCommand = vscode.commands.registerCommand('extension.rustFmt', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
         const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         const args = config.get<string[]>('formatArgs') || [];
-        runCargoCommand('cargo fmt', args, outputChannel);
+        runCargoCommand('cargo fmt', args, outputChannel, projectDir);
     });
 
     let lintCommand = vscode.commands.registerCommand('extension.rustClippy', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
         const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         const args = config.get<string[]>('lintArgs') || [];
-        runCargoCommand('cargo clippy', args, outputChannel, () => {
+        runCargoCommand('cargo clippy', args, outputChannel, projectDir, () => {
             // Display lint errors and warnings
-            cp.exec('cargo clippy', (error, stdout, stderr) => {
+            cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
                 if (error) {
                     vscode.window.showErrorMessage('Cargo Clippy failed');
                 } else {
@@ -62,41 +89,79 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     let testCommand = vscode.commands.registerCommand('extension.rustTest', () => {
-        runCargoCommand('cargo test', [], outputChannel, () => {
-            // Display test results
-            cp.exec('cargo test', (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage('Cargo Test failed');
-                    outputChannel.appendLine(stdout.toString());
-                    outputChannel.appendLine(stderr.toString());
-                } else {
-                    vscode.window.showInformationMessage('Cargo Test completed successfully.');
-                    outputChannel.appendLine(stdout.toString());
-                }
-            });
-        });
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo test', [], outputChannel, projectDir);
     });
 
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
-        runCargoCommand('cargo fmt --', [uri.fsPath], outputChannel);
+        const projectDir = findCargoTomlDir(uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo fmt --', [uri.fsPath], outputChannel, projectDir);
     });
 
     let lintFileCommand = vscode.commands.registerCommand('extension.rustClippyFile', (uri: vscode.Uri) => {
-        runCargoCommand('cargo clippy --', ['--', uri.fsPath], outputChannel);
+        const projectDir = findCargoTomlDir(uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo clippy --', ['--', uri.fsPath], outputChannel, projectDir);
     });
 
     let editRustfmtConfigCommand = vscode.commands.registerCommand('extension.editRustfmtConfig', () => {
-        const configPath = path.join(vscode.workspace.rootPath || '', 'rustfmt.toml');
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        const configPath = path.join(projectDir, 'rustfmt.toml');
         openConfigFile(configPath);
     });
 
     let editClippyConfigCommand = vscode.commands.registerCommand('extension.editClippyConfig', () => {
-        const configPath = path.join(vscode.workspace.rootPath || '', 'clippy.toml');
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        const configPath = path.join(projectDir, 'clippy.toml');
         openConfigFile(configPath);
     });
 
     let fixCommand = vscode.commands.registerCommand('extension.rustFix', () => {
-        runCargoCommand('cargo fix', [], outputChannel);
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo fix', [], outputChannel, projectDir);
     });
 
     context.subscriptions.push(formatCommand);
@@ -110,29 +175,22 @@ export function activate(context: vscode.ExtensionContext) {
 
     vscode.workspace.onDidSaveTextDocument((document) => {
         if (document.languageId === 'rust') {
+            const projectDir = findCargoTomlDir(document.uri.fsPath);
+            if (!projectDir) {
+                vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                return;
+            }
             const config = vscode.workspace.getConfiguration('rustFormatterLinter');
             if (config.get<boolean>('formatOnSave')) {
-                runCargoCommand('cargo fmt', [], outputChannel);
+                runCargoCommand('cargo fmt', [], outputChannel, projectDir);
             }
             if (config.get<boolean>('testOnSave')) {
-                runCargoCommand('cargo test', [], outputChannel, () => {
-                    // Display test results
-                    cp.exec('cargo test', (error, stdout, stderr) => {
-                        if (error) {
-                            vscode.window.showErrorMessage('Cargo Test failed');
-                            outputChannel.appendLine(stdout.toString());
-                            outputChannel.appendLine(stderr.toString());
-                        } else {
-                            vscode.window.showInformationMessage('Cargo Test completed successfully.');
-                            outputChannel.appendLine(stdout.toString());
-                        }
-                    });
-                });
+                runCargoCommand('cargo test', [], outputChannel, projectDir);
             }
         }
     });
 
-    // Durum çubuğunda format, lint, test ve fix düğmeleri ekleyin
+    // Add status bar items for format, lint, test, and fix commands
     const statusBarFormatItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarFormatItem.command = 'extension.rustFmt';
     statusBarFormatItem.text = '$(check) Rust Format';
@@ -163,7 +221,7 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('Rust Formatter and Linter Extension is now deactivated!');
+    console.log('Rust Formatter and Linter Plus is now deactivated!');
 }
 
 function parseClippyOutput(output: string): Map<string, vscode.Diagnostic[]> {
