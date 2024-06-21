@@ -438,7 +438,7 @@ async function runWorkspaceDiagnostics(command: string) {
             continue;
         }
 
-        const args = ['clippy', '--message-format=json']; // Ensure the correct command for diagnostics
+        const args = ['clippy', '--message-format=json'];
         await new Promise<void>((resolve) => {
             runCommand('cargo', args, outputChannel, packageDir, 'cargo', (success) => {
                 if (success) {
@@ -485,8 +485,8 @@ function parseClippyOutput(output: string): RustError[] {
                 if (primarySpan) {
                     const rustError: RustError = {
                         filePath: primarySpan.file_name,
-                        line: primarySpan.line_start - 1, // Convert to 0-based index
-                        column: primarySpan.column_start - 1, // Convert to 0-based index
+                        line: primarySpan.line_start - 1,
+                        column: primarySpan.column_start - 1,
                         severity: message.level,
                         message: message.rendered || message.message
                     };
@@ -1036,7 +1036,6 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(disposable);
     });
 
-    // Real-time linting and formatting feedback
     vscode.workspace.onDidChangeTextDocument((event) => {
         const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         if (config.get<boolean>('realTimeLinting')) {
