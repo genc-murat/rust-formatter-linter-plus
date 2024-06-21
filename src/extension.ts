@@ -139,6 +139,20 @@ export function activate(context: vscode.ExtensionContext) {
         runCargoCommand('cargo build', [], outputChannel, projectDir);
     });
 
+    let docCommand = vscode.commands.registerCommand('extension.rustDoc', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo doc', ['--open'], outputChannel, projectDir);
+    });
+
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
@@ -206,6 +220,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(testCommand);
     context.subscriptions.push(checkCommand);
     context.subscriptions.push(buildCommand);
+    context.subscriptions.push(docCommand);
     context.subscriptions.push(formatFileCommand);
     context.subscriptions.push(lintFileCommand);
     context.subscriptions.push(editRustfmtConfigCommand);
@@ -250,6 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
             { label: 'Run cargo test', description: 'Run Rust tests' },
             { label: 'Run cargo check', description: 'Check Rust code' },
             { label: 'Run cargo build', description: 'Build Rust code' },
+            { label: 'Run cargo doc', description: 'Generate documentation for Rust code' },
             { label: 'Run cargo fix', description: 'Fix Rust code' }
         ];
 
@@ -276,6 +292,9 @@ export function activate(context: vscode.ExtensionContext) {
                 break;
             case 'Run cargo build':
                 vscode.commands.executeCommand('extension.rustBuild');
+                break;
+            case 'Run cargo doc':
+                vscode.commands.executeCommand('extension.rustDoc');
                 break;
             case 'Run cargo fix':
                 vscode.commands.executeCommand('extension.rustFix');
