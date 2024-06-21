@@ -125,6 +125,20 @@ export function activate(context: vscode.ExtensionContext) {
         runCargoCommand('cargo check', [], outputChannel, projectDir);
     });
 
+    let buildCommand = vscode.commands.registerCommand('extension.rustBuild', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo build', [], outputChannel, projectDir);
+    });
+
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
@@ -191,6 +205,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(lintCommand);
     context.subscriptions.push(testCommand);
     context.subscriptions.push(checkCommand);
+    context.subscriptions.push(buildCommand);
     context.subscriptions.push(formatFileCommand);
     context.subscriptions.push(lintFileCommand);
     context.subscriptions.push(editRustfmtConfigCommand);
@@ -214,44 +229,61 @@ export function activate(context: vscode.ExtensionContext) {
             if (config.get<boolean>('checkOnSave')) {
                 runCargoCommand('cargo check', [], outputChannel, projectDir);
             }
+            if (config.get<boolean>('buildOnSave')) {
+                runCargoCommand('cargo build', [], outputChannel, projectDir);
+            }
         }
     });
 
-    // Add status bar items for format, lint, test, fix, and check commands
-    const statusBarFormatItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarFormatItem.command = 'extension.rustFmt';
-    statusBarFormatItem.text = '$(check) Rust Format';
-    statusBarFormatItem.tooltip = 'Run cargo fmt';
-    statusBarFormatItem.show();
-    context.subscriptions.push(statusBarFormatItem);
+    // Add a status bar item for a dropdown of commands
+    const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    statusBarItem.command = 'extension.showQuickPick';
+    statusBarItem.text = '$(menu) Rust Actions';
+    statusBarItem.tooltip = 'Show Rust commands';
+    statusBarItem.show();
+    context.subscriptions.push(statusBarItem);
 
-    const statusBarLintItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarLintItem.command = 'extension.rustClippy';
-    statusBarLintItem.text = '$(alert) Rust Lint';
-    statusBarLintItem.tooltip = 'Run cargo clippy';
-    statusBarLintItem.show();
-    context.subscriptions.push(statusBarLintItem);
+    let showQuickPickCommand = vscode.commands.registerCommand('extension.showQuickPick', async () => {
+        const items: vscode.QuickPickItem[] = [
+            { label: 'Run cargo fmt', description: 'Format Rust code' },
+            { label: 'Run cargo clippy', description: 'Lint Rust code' },
+            { label: 'Run cargo test', description: 'Run Rust tests' },
+            { label: 'Run cargo check', description: 'Check Rust code' },
+            { label: 'Run cargo build', description: 'Build Rust code' },
+            { label: 'Run cargo fix', description: 'Fix Rust code' }
+        ];
 
-    const statusBarTestItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarTestItem.command = 'extension.rustTest';
-    statusBarTestItem.text = '$(beaker) Rust Test';
-    statusBarTestItem.tooltip = 'Run cargo test';
-    statusBarTestItem.show();
-    context.subscriptions.push(statusBarTestItem);
+        const selectedItem = await vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a Rust command'
+        });
 
-    const statusBarFixItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarFixItem.command = 'extension.rustFix';
-    statusBarFixItem.text = '$(tools) Rust Fix';
-    statusBarFixItem.tooltip = 'Run cargo fix';
-    statusBarFixItem.show();
-    context.subscriptions.push(statusBarFixItem);
+        if (!selectedItem) {
+            return;
+        }
 
-    const statusBarCheckItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarCheckItem.command = 'extension.rustCheck';
-    statusBarCheckItem.text = '$(checklist) Rust Check';
-    statusBarCheckItem.tooltip = 'Run cargo check';
-    statusBarCheckItem.show();
-    context.subscriptions.push(statusBarCheckItem);
+        switch (selectedItem.label) {
+            case 'Run cargo fmt':
+                vscode.commands.executeCommand('extension.rustFmt');
+                break;
+            case 'Run cargo clippy':
+                vscode.commands.executeCommand('extension.rustClippy');
+                break;
+            case 'Run cargo test':
+                vscode.commands.executeCommand('extension.rustTest');
+                break;
+            case 'Run cargo check':
+                vscode.commands.executeCommand('extension.rustCheck');
+                break;
+            case 'Run cargo build':
+                vscode.commands.executeCommand('extension.rustBuild');
+                break;
+            case 'Run cargo fix':
+                vscode.commands.executeCommand('extension.rustFix');
+                break;
+        }
+    });
+
+    context.subscriptions.push(showQuickPickCommand);
 }
 
 export function deactivate() {
