@@ -374,8 +374,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
     });
-    
-    
 
     context.subscriptions.push(formatCommand);
     context.subscriptions.push(lintCommand);
