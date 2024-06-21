@@ -561,6 +561,8 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel(outputChannelName);
     outputChannel.show(true);
 
+    const terminal = vscode.window.createTerminal('Rust Commands');
+
     const commands = [
         {
             command: 'extension.rustFmt',
@@ -576,7 +578,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const args = config.get<string[]>('formatArgs') || ['--', 'check'];
-                runCommand('cargo fmt', args, outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo fmt', args, terminal, projectDir);
             }
         },
         {
@@ -593,25 +595,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const additionalArgs = await showAdditionalOptions('cargo clippy');
-                runCommand(
-                    'cargo clippy',
-                    additionalArgs,
-                    outputChannel,
-                    projectDir,
-                    'cargo',
-                    (success) => {
-                        if (success) {
-                            cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
-                                if (error) {
-                                    vscode.window.showErrorMessage('Cargo Clippy failed');
-                                } else {
-                                    const errors = parseClippyOutput(stdout);
-                                    displayDiagnostics(errors, outputChannel);
-                                }
-                            });
-                        }
-                    }
-                );
+                runTerminalCommand('cargo clippy', additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -628,7 +612,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const additionalArgs = await showAdditionalOptions('cargo test');
-                runCommand('cargo test', additionalArgs, outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo test', additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -644,7 +628,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo check', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo check', [], terminal, projectDir);
             }
         },
         {
@@ -661,7 +645,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const additionalArgs = await showAdditionalOptions('cargo build');
-                runCommand('cargo build', additionalArgs, outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo build', additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -677,7 +661,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo doc', ['--open'], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo doc', ['--open'], terminal, projectDir);
             }
         },
         {
@@ -693,7 +677,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo clean', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo clean', [], terminal, projectDir);
             }
         },
         {
@@ -710,7 +694,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const additionalArgs = await showAdditionalOptions('cargo run');
-                runCommand('cargo run', additionalArgs, outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo run', additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -727,7 +711,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const additionalArgs = await showAdditionalOptions('cargo bench');
-                runCommand('cargo bench', additionalArgs, outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo bench', additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -738,7 +722,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo fmt --', [uri.fsPath], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo fmt --', [uri.fsPath], terminal, projectDir);
             }
         },
         {
@@ -749,7 +733,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo clippy --', ['--', uri.fsPath], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo clippy --', ['--', uri.fsPath], terminal, projectDir);
             }
         },
         {
@@ -799,7 +783,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo fix', ['--allow-dirty', '--allow-staged'], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo fix', ['--allow-dirty', '--allow-staged'], terminal, projectDir);
             }
         },
         {
@@ -821,29 +805,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand(
-                    'rust-analyzer',
-                    ['diagnostics', projectDir],
-                    outputChannel,
-                    projectDir,
-                    'rust-analyzer',
-                    (success) => {
-                        if (success) {
-                            cp.exec(
-                                `rust-analyzer diagnostics ${projectDir}`,
-                                { cwd: projectDir },
-                                (error, stdout, stderr) => {
-                                    if (error) {
-                                        vscode.window.showErrorMessage('Rust Analyzer failed');
-                                    } else {
-                                        const errors = parseRustAnalyzerOutput(stdout);
-                                        displayDiagnostics(errors, outputChannel);
-                                    }
-                                }
-                            );
-                        }
-                    }
-                );
+                runTerminalCommand('rust-analyzer diagnostics', [projectDir], terminal, projectDir);
             }
         },
         {
@@ -878,7 +840,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
                     { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
                     { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
-                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' } // Added new item here
+                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -938,7 +900,7 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Run cargo-generate':
                         vscode.commands.executeCommand('extension.cargoGenerate');
                         break;
-                    case 'Run refactor suggestions': // Added new case here
+                    case 'Run refactor suggestions':
                         vscode.commands.executeCommand('extension.runRefactorSuggestions');
                         break;
                 }
@@ -956,7 +918,7 @@ export function activate(context: vscode.ExtensionContext) {
             callback: runCargoGenerate
         },
         {
-            command: 'extension.runRefactorSuggestions', // Registered the new command here
+            command: 'extension.runRefactorSuggestions',
             callback: runRefactorSuggestions
         }
     ];
@@ -978,18 +940,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return;
                 }
                 const args = ['--message-format=json', '--'];
-                runCommand('cargo clippy', args, outputChannel, projectDir, 'cargo', (success) => {
-                    if (success) {
-                        cp.exec('cargo clippy --message-format=json', { cwd: projectDir }, (error, stdout, stderr) => {
-                            if (error) {
-                                vscode.window.showErrorMessage('Cargo Clippy failed');
-                            } else {
-                                const errors = parseClippyOutput(stdout);
-                                displayDiagnostics(errors, outputChannel);
-                            }
-                        });
-                    }
-                });
+                runTerminalCommand('cargo clippy', args, terminal, projectDir);
             }
         }
     });
@@ -1002,16 +953,16 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             if (config.get<boolean>('formatOnSave')) {
-                runCommand('cargo fmt', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo fmt', [], terminal, projectDir);
             }
             if (config.get<boolean>('testOnSave')) {
-                runCommand('cargo test', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo test', [], terminal, projectDir);
             }
             if (config.get<boolean>('checkOnSave')) {
-                runCommand('cargo check', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo check', [], terminal, projectDir);
             }
             if (config.get<boolean>('buildOnSave')) {
-                runCommand('cargo build', [], outputChannel, projectDir, 'cargo');
+                runTerminalCommand('cargo build', [], terminal, projectDir);
             }
         }
     });
@@ -1023,6 +974,13 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
+
+function runTerminalCommand(command: string, args: string[], terminal: vscode.Terminal, cwd: string) {
+    terminal.sendText(`cd "${cwd}"`);
+    terminal.sendText(`${command} ${args.join(' ')}`);
+    terminal.show();
+}
+
 
 export function deactivate() {
     console.log('Rust Formatter and Linter Plus is now deactivated!');
