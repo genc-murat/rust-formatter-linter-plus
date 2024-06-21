@@ -70,6 +70,49 @@ function runCargoCommand(command: string, args: string[], outputChannel: vscode.
     });
 }
 
+function runRustAnalyzerCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: (success: boolean) => void) {
+    createCommandStatusBarItem();
+    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    if (config.get<boolean>('autoClearOutput')) {
+        outputChannel.clear();
+    }
+    commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
+    commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
+
+    const process = cp.spawn(command, args, { shell: true, cwd: cwd });
+    outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
+
+    process.stdout.on('data', (data) => {
+        const output = data.toString();
+        console.log(`stdout: ${output}`); // Debugging statement
+        outputChannel.appendLine(output);
+    });
+
+    process.stderr.on('data', (data) => {
+        const output = data.toString();
+        console.error(`stderr: ${output}`); // Debugging statement
+        outputChannel.appendLine(output);
+    });
+
+    process.on('close', (code) => {
+        if (code !== 0) {
+            vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
+            updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
+        } else {
+            vscode.window.showInformationMessage(`${command} completed successfully.`);
+            updateCommandStatusBarItem(`${command} completed`, `Successfully completed ${command}`, true);
+        }
+        if (onDone) {
+            onDone(code === 0);
+        }
+    });
+
+    process.on('error', (err) => {
+        vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
+        updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
+    });
+}
+
 function findCargoTomlDir(currentDir: string): string | null {
     const rootDir = path.parse(currentDir).root;
     let dir = currentDir;
@@ -82,6 +125,15 @@ function findCargoTomlDir(currentDir: string): string | null {
     }
 
     return null;
+}
+
+function checkRustAnalyzerInstalled(): boolean {
+    try {
+        cp.execSync('rust-analyzer --version', { stdio: 'ignore' });
+        return true;
+    } catch {
+        return false;
+    }
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -293,6 +345,38 @@ export function activate(context: vscode.ExtensionContext) {
         runCargoCommand('cargo fix', [], outputChannel, projectDir);
     });
 
+    let rustAnalyzerCommand = vscode.commands.registerCommand('extension.rustAnalyzer', () => {
+        if (!checkRustAnalyzerInstalled()) {
+            vscode.window.showErrorMessage('rust-analyzer is not installed. Please install it from https://rust-analyzer.github.io/manual.html#rust-analyzer-language-server-binary');
+            return;
+        }
+    
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runRustAnalyzerCommand('rust-analyzer', ['diagnostics', projectDir], outputChannel, projectDir, (success) => {
+            if (success) {
+                cp.exec(`rust-analyzer diagnostics ${projectDir}`, { cwd: projectDir }, (error, stdout, stderr) => {
+                    if (error) {
+                        vscode.window.showErrorMessage('Rust Analyzer failed');
+                    } else {
+                        const errors = parseRustAnalyzerOutput(stdout);
+                        displayDiagnostics(errors, outputChannel);
+                    }
+                });
+            }
+        });
+    });
+    
+    
+
     context.subscriptions.push(formatCommand);
     context.subscriptions.push(lintCommand);
     context.subscriptions.push(testCommand);
@@ -307,6 +391,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(editRustfmtConfigCommand);
     context.subscriptions.push(editClippyConfigCommand);
     context.subscriptions.push(fixCommand);
+    context.subscriptions.push(rustAnalyzerCommand);
 
     vscode.workspace.onDidSaveTextDocument((document) => {
         if (document.languageId === 'rust') {
@@ -349,7 +434,8 @@ export function activate(context: vscode.ExtensionContext) {
             { label: 'Run cargo clean', description: 'Clean Rust project' },
             { label: 'Run cargo run', description: 'Run Rust code' },
             { label: 'Run cargo bench', description: 'Benchmark Rust code' },
-            { label: 'Run cargo fix', description: 'Fix Rust code' }
+            { label: 'Run cargo fix', description: 'Fix Rust code' },
+            { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' }
         ];
 
         const selectedItem = await vscode.window.showQuickPick(items, {
@@ -391,6 +477,9 @@ export function activate(context: vscode.ExtensionContext) {
             case 'Run cargo fix':
                 vscode.commands.executeCommand('extension.rustFix');
                 break;
+            case 'Run rust-analyzer diagnostics':
+                vscode.commands.executeCommand('extension.rustAnalyzer');
+                break;
         }
     });
 
@@ -417,6 +506,40 @@ function parseClippyOutput(output: string): Map<string, vscode.Diagnostic[]> {
             const range = new vscode.Range(new vscode.Position(line, column), new vscode.Position(line, column));
             currentDiagnostic = new vscode.Diagnostic(range, message, mapSeverity(severity));
             currentDiagnostic.source = 'clippy';
+
+            currentFilePath = filePath;
+            if (!diagnostics.has(currentFilePath)) {
+                diagnostics.set(currentFilePath, []);
+            }
+            diagnostics.get(currentFilePath)!.push(currentDiagnostic);
+        } else if (currentDiagnostic && line.trim().startsWith('note:')) {
+            // Found an additional note for the current diagnostic
+            currentDiagnostic.message += `\n${line.trim()}`;
+        } else if (currentDiagnostic && currentFilePath) {
+            // Append additional lines to the current diagnostic message
+            currentDiagnostic.message += `\n${line.trim()}`;
+        }
+    });
+
+    return diagnostics;
+}
+
+function parseRustAnalyzerOutput(output: string): Map<string, vscode.Diagnostic[]> {
+    const diagnostics = new Map<string, vscode.Diagnostic[]>();
+    const lines = output.split('\n');
+    let currentFilePath: string | null = null;
+    let currentDiagnostic: vscode.Diagnostic | null = null;
+
+    lines.forEach((line) => {
+        const match = line.match(/^(.*):(\d+):(\d+):\s*(\w+):\s*(.*)$/);
+        if (match) {
+            // Found a new diagnostic entry
+            const [ , filePath, lineStr, columnStr, severity, message ] = match;
+            const line = parseInt(lineStr, 10) - 1;
+            const column = parseInt(columnStr, 10) - 1;
+            const range = new vscode.Range(new vscode.Position(line, column), new vscode.Position(line, column));
+            currentDiagnostic = new vscode.Diagnostic(range, message, mapSeverity(severity));
+            currentDiagnostic.source = 'rust-analyzer';
 
             currentFilePath = filePath;
             if (!diagnostics.has(currentFilePath)) {

@@ -1,180 +1,186 @@
 {
-    "name": "rust-formatter-linter",
-    "displayName": "Rust Formatter and Linter",
-    "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, and fix.",
-    "version": "0.0.4",
-    "publisher": "gencmurat",
-    "engines": {
-      "vscode": "^1.90.0"
-    },
-    "categories": [
-      "Other"
+  "name": "rust-formatter-linter",
+  "displayName": "Rust Formatter and Linter",
+  "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, and fix.",
+  "version": "0.0.4",
+  "publisher": "gencmurat",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:extension.rustFmt",
+    "onCommand:extension.rustClippy",
+    "onCommand:extension.rustTest",
+    "onCommand:extension.rustCheck",
+    "onCommand:extension.rustBuild",
+    "onCommand:extension.rustDoc",
+    "onCommand:extension.rustClean",
+    "onCommand:extension.rustRun",
+    "onCommand:extension.rustBench",
+    "onCommand:extension.rustFmtFile",
+    "onCommand:extension.rustClippyFile",
+    "onCommand:extension.editRustfmtConfig",
+    "onCommand:extension.editClippyConfig",
+    "onCommand:extension.rustFix",
+    "onCommand:extension.showQuickPick",
+    "onCommand:extension.rustAnalyzer",
+    "onLanguage:rust"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "extension.rustFmt",
+        "title": "Run cargo fmt",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustClippy",
+        "title": "Run cargo clippy",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustTest",
+        "title": "Run cargo test",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustCheck",
+        "title": "Run cargo check",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustBuild",
+        "title": "Run cargo build",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustDoc",
+        "title": "Run cargo doc",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustClean",
+        "title": "Run cargo clean",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustRun",
+        "title": "Run cargo run",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustBench",
+        "title": "Run cargo bench",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustFmtFile",
+        "title": "Format this file with cargo fmt",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustClippyFile",
+        "title": "Lint this file with cargo clippy",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.editRustfmtConfig",
+        "title": "Edit rustfmt.toml",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.editClippyConfig",
+        "title": "Edit clippy.toml",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustFix",
+        "title": "Run cargo fix",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.showQuickPick",
+        "title": "Show Rust Commands",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.rustAnalyzer",
+        "title": "Run rust-analyzer diagnostics",
+        "category": "Rust"
+      }
     ],
-    "activationEvents": [
-      "onCommand:extension.rustFmt",
-      "onCommand:extension.rustClippy",
-      "onCommand:extension.rustTest",
-      "onCommand:extension.rustCheck",
-      "onCommand:extension.rustBuild",
-      "onCommand:extension.rustDoc",
-      "onCommand:extension.rustClean",
-      "onCommand:extension.rustRun",
-      "onCommand:extension.rustBench",
-      "onCommand:extension.rustFmtFile",
-      "onCommand:extension.rustClippyFile",
-      "onCommand:extension.editRustfmtConfig",
-      "onCommand:extension.editClippyConfig",
-      "onCommand:extension.rustFix",
-      "onCommand:extension.showQuickPick",
-      "onLanguage:rust"
-    ],
-    "main": "./out/extension.js",
-    "contributes": {
-      "commands": [
-        {
-          "command": "extension.rustFmt",
-          "title": "Run cargo fmt",
-          "category": "Rust"
+    "configuration": {
+      "type": "object",
+      "title": "Rust Formatter and Linter Configuration",
+      "properties": {
+        "rustFormatterLinter.formatOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Run cargo fmt on save"
         },
-        {
-          "command": "extension.rustClippy",
-          "title": "Run cargo clippy",
-          "category": "Rust"
+        "rustFormatterLinter.testOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run cargo test on save"
         },
-        {
-          "command": "extension.rustTest",
-          "title": "Run cargo test",
-          "category": "Rust"
+        "rustFormatterLinter.checkOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run cargo check on save"
         },
-        {
-          "command": "extension.rustCheck",
-          "title": "Run cargo check",
-          "category": "Rust"
+        "rustFormatterLinter.buildOnSave": {
+          "type": "boolean",
+          "default": false,
+          "description": "Run cargo build on save"
         },
-        {
-          "command": "extension.rustBuild",
-          "title": "Run cargo build",
-          "category": "Rust"
+        "rustFormatterLinter.formatArgs": {
+          "type": "array",
+          "default": [],
+          "description": "Additional arguments for cargo fmt"
         },
-        {
-          "command": "extension.rustDoc",
-          "title": "Run cargo doc",
-          "category": "Rust"
+        "rustFormatterLinter.lintArgs": {
+          "type": "array",
+          "default": [],
+          "description": "Additional arguments for cargo clippy"
         },
-        {
-          "command": "extension.rustClean",
-          "title": "Run cargo clean",
-          "category": "Rust"
+        "rustFormatterLinter.outputChannelName": {
+          "type": "string",
+          "default": "Rust Formatter and Linter Plus",
+          "description": "Name of the output channel"
         },
-        {
-          "command": "extension.rustRun",
-          "title": "Run cargo run",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.rustBench",
-          "title": "Run cargo bench",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.rustFmtFile",
-          "title": "Format this file with cargo fmt",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.rustClippyFile",
-          "title": "Lint this file with cargo clippy",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.editRustfmtConfig",
-          "title": "Edit rustfmt.toml",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.editClippyConfig",
-          "title": "Edit clippy.toml",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.rustFix",
-          "title": "Run cargo fix",
-          "category": "Rust"
-        },
-        {
-          "command": "extension.showQuickPick",
-          "title": "Show Rust Commands",
-          "category": "Rust"
-        }
-      ],
-      "configuration": {
-        "type": "object",
-        "title": "Rust Formatter and Linter Configuration",
-        "properties": {
-          "rustFormatterLinter.formatOnSave": {
-            "type": "boolean",
-            "default": true,
-            "description": "Run cargo fmt on save"
-          },
-          "rustFormatterLinter.testOnSave": {
-            "type": "boolean",
-            "default": false,
-            "description": "Run cargo test on save"
-          },
-          "rustFormatterLinter.checkOnSave": {
-            "type": "boolean",
-            "default": false,
-            "description": "Run cargo check on save"
-          },
-          "rustFormatterLinter.buildOnSave": {
-            "type": "boolean",
-            "default": false,
-            "description": "Run cargo build on save"
-          },
-          "rustFormatterLinter.formatArgs": {
-            "type": "array",
-            "default": [],
-            "description": "Additional arguments for cargo fmt"
-          },
-          "rustFormatterLinter.lintArgs": {
-            "type": "array",
-            "default": [],
-            "description": "Additional arguments for cargo clippy"
-          },
-          "rustFormatterLinter.outputChannelName": {
-            "type": "string",
-            "default": "Rust Formatter and Linter Plus",
-            "description": "Name of the output channel"
-          },
-          "rustFormatterLinter.autoClearOutput": {
-            "type": "boolean",
-            "default": false,
-            "description": "Automatically clear the output channel before each command"
-          }
+        "rustFormatterLinter.autoClearOutput": {
+          "type": "boolean",
+          "default": false,
+          "description": "Automatically clear the output channel before each command"
         }
       }
-    },
-    "repository": {
-      "type": "git",
-      "url": "https://github.com/genc-murat/rust-formatter-linter-plus.git"
-    },
-    "scripts": {
-      "vscode:prepublish": "npm run compile",
-      "compile": "tsc -p ./",
-      "watch": "tsc -watch -p ./",
-      "pretest": "npm run compile && npm run lint",
-      "lint": "eslint src --ext ts",
-      "test": "node ./out/test/runTest.js"
-    },
-    "devDependencies": {
-      "@types/vscode": "^1.90.0",
-      "@types/mocha": "^10.0.6",
-      "@types/node": "20.x",
-      "@typescript-eslint/eslint-plugin": "^7.11.0",
-      "@typescript-eslint/parser": "^7.11.0",
-      "eslint": "^8.57.0",
-      "typescript": "^5.4.5",
-      "@vscode/test-cli": "^0.0.9",
-      "@vscode/test-electron": "^2.4.0"
     }
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/genc-murat/rust-formatter-linter-plus.git"
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.90.0",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "20.x",
+    "@typescript-eslint/eslint-plugin": "^7.11.0",
+    "@typescript-eslint/parser": "^7.11.0",
+    "eslint": "^8.57.0",
+    "typescript": "^5.4.5",
+    "@vscode/test-cli": "^0.0.9",
+    "@vscode/test-electron": "^2.4.0"
   }
+}
