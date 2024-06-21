@@ -118,7 +118,7 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
             }
         }
     } else if (command === 'cargo bench') {
-        const benchOptions = await vscode.window.showQuickPick(['All Benchmarks', 'Specific Benchmark'], {
+        const benchOptions = await vscode.window.showQuickPick(['All Benchmarks', 'Specific Benchmark', 'Profile Benchmarks'], {
             placeHolder: 'Select benchmark type'
         });
         if (benchOptions === 'Specific Benchmark') {
@@ -127,6 +127,13 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
             });
             if (benchName) {
                 options.push(`--bench ${benchName}`);
+            }
+        } else if (benchOptions === 'Profile Benchmarks') {
+            const profileName = await vscode.window.showQuickPick(['dev', 'release'], {
+                placeHolder: 'Select profile'
+            });
+            if (profileName) {
+                options.push(`--profile ${profileName}`);
             }
         }
     } else if (command === 'cargo run') {
@@ -297,7 +304,7 @@ export function activate(context: vscode.ExtensionContext) {
         const additionalArgs = await showAdditionalOptions('cargo bench');
         runCommand('cargo bench', additionalArgs, outputChannel, projectDir, 'cargo');
     });
-
+    
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', async (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
