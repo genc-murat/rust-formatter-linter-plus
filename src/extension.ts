@@ -129,6 +129,20 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
                 options.push(`--bench ${benchName}`);
             }
         }
+    } else if (command === 'cargo run') {
+        const runOptions = await vscode.window.showQuickPick(['Default', 'Release'], {
+            placeHolder: 'Select run type'
+        });
+        if (runOptions === 'Release') {
+            options.push('--release');
+        }
+    } else if (command === 'cargo clippy') {
+        const clippyOptions = await vscode.window.showQuickPick(['Default', 'Fix'], {
+            placeHolder: 'Select clippy type'
+        });
+        if (clippyOptions === 'Fix') {
+            options.push('--fix');
+        }
     }
     return options;
 }
@@ -167,8 +181,8 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        const args = config.get<string[]>('lintArgs') || ['--', '--fix'];
-        runCommand('cargo clippy', args, outputChannel, projectDir, 'cargo', (success) => {
+        const additionalArgs = await showAdditionalOptions('cargo clippy');
+        runCommand('cargo clippy', additionalArgs, outputChannel, projectDir, 'cargo', (success) => {
             if (success) {
                 cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
                     if (error) {
@@ -265,7 +279,8 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCommand('cargo run', [], outputChannel, projectDir, 'cargo');
+        const additionalArgs = await showAdditionalOptions('cargo run');
+        runCommand('cargo run', additionalArgs, outputChannel, projectDir, 'cargo');
     });
 
     let benchCommand = vscode.commands.registerCommand('extension.rustBench', async () => {
