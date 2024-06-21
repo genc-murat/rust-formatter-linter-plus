@@ -2,7 +2,7 @@
   "name": "rustcodepro",
   "displayName": "RustCodePro",
   "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, and fix.",
-  "version": "0.9",
+  "version": "0.9.0",
   "publisher": "gencmurat",
   "engines": {
     "vscode": "^1.90.0"
