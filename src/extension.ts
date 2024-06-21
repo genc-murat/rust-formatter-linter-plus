@@ -497,6 +497,44 @@ function execPromise(command: string): Promise<{ stdout: string; stderr: string 
     });
 }
 
+async function runCargoGenerate() {
+    const templateUrl = await vscode.window.showInputBox({
+        prompt: 'Enter the template URL or name',
+        placeHolder: 'gh:user/repo or user/repo'
+    });
+
+    if (!templateUrl) {
+        vscode.window.showErrorMessage('Template URL or name is required.');
+        return;
+    }
+
+    const projectName = await vscode.window.showInputBox({
+        prompt: 'Enter the project name',
+        placeHolder: 'my-new-project'
+    });
+
+    if (!projectName) {
+        vscode.window.showErrorMessage('Project name is required.');
+        return;
+    }
+
+    const targetDir = await vscode.window.showOpenDialog({
+        canSelectFolders: true,
+        openLabel: 'Select target directory'
+    });
+
+    if (!targetDir || targetDir.length === 0) {
+        vscode.window.showErrorMessage('Target directory is required.');
+        return;
+    }
+
+    const cwd = targetDir[0].fsPath;
+
+    const args = ['generate', '--git', templateUrl, '--name', projectName];
+
+    runCommand('cargo', args, outputChannel, cwd, 'cargo-generate');
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -820,7 +858,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
                     { label: 'Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
                     { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
-                    { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' }
+                    { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
+                    { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -877,6 +916,9 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Switch Rust Toolchain':
                         vscode.commands.executeCommand('extension.switchToolchain');
                         break;
+                    case 'Run cargo-generate':
+                        vscode.commands.executeCommand('extension.cargoGenerate');
+                        break;
                 }
             }
         },
@@ -886,6 +928,10 @@ export function activate(context: vscode.ExtensionContext) {
                 const command = config.get<string>('diagnosticsCommand') || 'cargo check';
                 await runWorkspaceDiagnostics(command);
             }
+        },
+        {
+            command: 'extension.cargoGenerate',
+            callback: runCargoGenerate
         }
     ];
 
