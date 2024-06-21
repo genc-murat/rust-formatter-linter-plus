@@ -538,6 +538,7 @@ async function runCargoGenerate() {
     runCommand('cargo', args, outputChannel, cwd, 'cargo-generate');
 }
 
+// New function to run refactor suggestions
 async function runRefactorSuggestions() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -876,7 +877,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
                     { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
                     { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
-                    { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' }
+                    { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
+                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' } // Added new item here
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -936,6 +938,9 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Run cargo-generate':
                         vscode.commands.executeCommand('extension.cargoGenerate');
                         break;
+                    case 'Run refactor suggestions': // Added new case here
+                        vscode.commands.executeCommand('extension.runRefactorSuggestions');
+                        break;
                 }
             }
         },
@@ -949,6 +954,10 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'extension.cargoGenerate',
             callback: runCargoGenerate
+        },
+        {
+            command: 'extension.runRefactorSuggestions', // Registered the new command here
+            callback: runRefactorSuggestions
         }
     ];
 
