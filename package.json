@@ -196,6 +196,11 @@
           "type": "string",
           "default": "cargo check",
           "description": "Command to use for workspace diagnostics (cargo check or cargo clippy)"
+        },
+        "rustFormatterLinter.enableClippyPedantic": {
+                "type": "boolean",
+                "default": false,
+                "description": "Enable Clippy pedantic lints for stricter code checks"
         }
       }
     }

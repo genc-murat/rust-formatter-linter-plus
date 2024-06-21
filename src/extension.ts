@@ -46,6 +46,8 @@ async function runCommand(
 ) {
     createCommandStatusBarItem();
     const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const enableClippyPedantic = config.get<boolean>('enableClippyPedantic') || false;
+
     if (config.get<boolean>('autoClearOutput')) {
         outputChannel.clear();
     }
@@ -54,6 +56,10 @@ async function runCommand(
     outputChannel.appendLine(`\n[${timestamp}] Running: ${command} ${args.join(' ')} in ${cwd}`);
     commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
     commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
+
+    if (command === 'cargo clippy' && enableClippyPedantic) {
+        args.push('--', '-D', 'clippy::pedantic');
+    }
 
     const proc = cp.spawn(command, args, { shell: true, cwd: cwd });
 
