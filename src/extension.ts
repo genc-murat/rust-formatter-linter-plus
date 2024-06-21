@@ -105,6 +105,30 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
         if (release === 'Release') {
             options.push('--release');
         }
+    } else if (command === 'cargo test') {
+        const testOptions = await vscode.window.showQuickPick(['All Tests', 'Specific Test'], {
+            placeHolder: 'Select test type'
+        });
+        if (testOptions === 'Specific Test') {
+            const testName = await vscode.window.showInputBox({
+                prompt: 'Enter the test name'
+            });
+            if (testName) {
+                options.push(`--test ${testName}`);
+            }
+        }
+    } else if (command === 'cargo bench') {
+        const benchOptions = await vscode.window.showQuickPick(['All Benchmarks', 'Specific Benchmark'], {
+            placeHolder: 'Select benchmark type'
+        });
+        if (benchOptions === 'Specific Benchmark') {
+            const benchName = await vscode.window.showInputBox({
+                prompt: 'Enter the benchmark name'
+            });
+            if (benchName) {
+                options.push(`--bench ${benchName}`);
+            }
+        }
     }
     return options;
 }
@@ -169,7 +193,8 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCommand('cargo test', [], outputChannel, projectDir, 'cargo');
+        const additionalArgs = await showAdditionalOptions('cargo test');
+        runCommand('cargo test', additionalArgs, outputChannel, projectDir, 'cargo');
     });
 
     let checkCommand = vscode.commands.registerCommand('extension.rustCheck', async () => {
@@ -254,7 +279,8 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCommand('cargo bench', [], outputChannel, projectDir, 'cargo');
+        const additionalArgs = await showAdditionalOptions('cargo bench');
+        runCommand('cargo bench', additionalArgs, outputChannel, projectDir, 'cargo');
     });
 
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', async (uri: vscode.Uri) => {
