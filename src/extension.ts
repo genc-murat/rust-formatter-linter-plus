@@ -27,7 +27,7 @@ function updateCommandStatusBarItem(message: string, tooltip: string, success: b
     }
 }
 
-function runCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, source: string, onDone?: (success: boolean) => void) {
+async function runCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, source: string, onDone?: (success: boolean) => void) {
     createCommandStatusBarItem();
     const config = vscode.workspace.getConfiguration('rustFormatterLinter');
     if (config.get<boolean>('autoClearOutput')) {
@@ -96,6 +96,19 @@ function checkRustAnalyzerInstalled(): boolean {
     }
 }
 
+async function showAdditionalOptions(command: string): Promise<string[]> {
+    const options = [];
+    if (command === 'cargo build') {
+        const release = await vscode.window.showQuickPick(['Debug', 'Release'], {
+            placeHolder: 'Select build type'
+        });
+        if (release === 'Release') {
+            options.push('--release');
+        }
+    }
+    return options;
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -104,7 +117,7 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel(outputChannelName);
     outputChannel.show(true); // Ensure the output channel is shown
 
-    let formatCommand = vscode.commands.registerCommand('extension.rustFmt', () => {
+    let formatCommand = vscode.commands.registerCommand('extension.rustFmt', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -115,11 +128,11 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        const args = config.get<string[]>('formatArgs') || [];
+        const args = config.get<string[]>('formatArgs') || ['--', 'check'];
         runCommand('cargo fmt', args, outputChannel, projectDir, 'cargo');
     });
 
-    let lintCommand = vscode.commands.registerCommand('extension.rustClippy', () => {
+    let lintCommand = vscode.commands.registerCommand('extension.rustClippy', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -130,7 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        const args = config.get<string[]>('lintArgs') || [];
+        const args = config.get<string[]>('lintArgs') || ['--', '--fix'];
         runCommand('cargo clippy', args, outputChannel, projectDir, 'cargo', (success) => {
             if (success) {
                 cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
@@ -145,7 +158,7 @@ export function activate(context: vscode.ExtensionContext) {
         });
     });
 
-    let testCommand = vscode.commands.registerCommand('extension.rustTest', () => {
+    let testCommand = vscode.commands.registerCommand('extension.rustTest', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -159,7 +172,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo test', [], outputChannel, projectDir, 'cargo');
     });
 
-    let checkCommand = vscode.commands.registerCommand('extension.rustCheck', () => {
+    let checkCommand = vscode.commands.registerCommand('extension.rustCheck', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -173,7 +186,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo check', [], outputChannel, projectDir, 'cargo');
     });
 
-    let buildCommand = vscode.commands.registerCommand('extension.rustBuild', () => {
+    let buildCommand = vscode.commands.registerCommand('extension.rustBuild', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -184,10 +197,11 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCommand('cargo build', [], outputChannel, projectDir, 'cargo');
+        const additionalArgs = await showAdditionalOptions('cargo build');
+        runCommand('cargo build', additionalArgs, outputChannel, projectDir, 'cargo');
     });
 
-    let docCommand = vscode.commands.registerCommand('extension.rustDoc', () => {
+    let docCommand = vscode.commands.registerCommand('extension.rustDoc', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -201,7 +215,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo doc', ['--open'], outputChannel, projectDir, 'cargo');
     });
 
-    let cleanCommand = vscode.commands.registerCommand('extension.rustClean', () => {
+    let cleanCommand = vscode.commands.registerCommand('extension.rustClean', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -215,7 +229,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo clean', [], outputChannel, projectDir, 'cargo');
     });
 
-    let runCommandHandler = vscode.commands.registerCommand('extension.rustRun', () => {
+    let runCommandHandler = vscode.commands.registerCommand('extension.rustRun', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -229,7 +243,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo run', [], outputChannel, projectDir, 'cargo');
     });
 
-    let benchCommand = vscode.commands.registerCommand('extension.rustBench', () => {
+    let benchCommand = vscode.commands.registerCommand('extension.rustBench', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -243,7 +257,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo bench', [], outputChannel, projectDir, 'cargo');
     });
 
-    let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
+    let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', async (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
@@ -252,7 +266,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo fmt --', [uri.fsPath], outputChannel, projectDir, 'cargo');
     });
 
-    let lintFileCommand = vscode.commands.registerCommand('extension.rustClippyFile', (uri: vscode.Uri) => {
+    let lintFileCommand = vscode.commands.registerCommand('extension.rustClippyFile', async (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
@@ -261,7 +275,7 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo clippy --', ['--', uri.fsPath], outputChannel, projectDir, 'cargo');
     });
 
-    let editRustfmtConfigCommand = vscode.commands.registerCommand('extension.editRustfmtConfig', () => {
+    let editRustfmtConfigCommand = vscode.commands.registerCommand('extension.editRustfmtConfig', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -276,7 +290,7 @@ export function activate(context: vscode.ExtensionContext) {
         openConfigFile(configPath, outputChannel);
     });
 
-    let editClippyConfigCommand = vscode.commands.registerCommand('extension.editClippyConfig', () => {
+    let editClippyConfigCommand = vscode.commands.registerCommand('extension.editClippyConfig', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -291,7 +305,7 @@ export function activate(context: vscode.ExtensionContext) {
         openConfigFile(configPath, outputChannel);
     });
 
-    let fixCommand = vscode.commands.registerCommand('extension.rustFix', () => {
+    let fixCommand = vscode.commands.registerCommand('extension.rustFix', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -305,12 +319,12 @@ export function activate(context: vscode.ExtensionContext) {
         runCommand('cargo fix', [], outputChannel, projectDir, 'cargo');
     });
 
-    let rustAnalyzerCommand = vscode.commands.registerCommand('extension.rustAnalyzer', () => {
+    let rustAnalyzerCommand = vscode.commands.registerCommand('extension.rustAnalyzer', async () => {
         if (!checkRustAnalyzerInstalled()) {
             vscode.window.showErrorMessage('rust-analyzer is not installed. Please install it from https://rust-analyzer.github.io/manual.html#rust-analyzer-language-server-binary');
             return;
         }
-    
+
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
