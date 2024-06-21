@@ -198,9 +198,33 @@
           "description": "Command to use for workspace diagnostics (cargo check or cargo clippy)"
         },
         "rustFormatterLinter.enableClippyPedantic": {
-                "type": "boolean",
-                "default": false,
-                "description": "Enable Clippy pedantic lints for stricter code checks"
+          "type": "boolean",
+          "default": false,
+          "description": "Enable Clippy pedantic lints for stricter code checks"
+        },
+        "rustFormatterLinter.profiles": {
+          "type": "object",
+          "default": {
+            "Strict Linting": {
+              "formatArgs": ["--", "check"],
+              "enableClippyPedantic": true,
+              "realTimeLinting": true,
+              "formatOnSave": true,
+              "testOnSave": true,
+              "checkOnSave": true,
+              "buildOnSave": false
+            },
+            "Fast Feedback": {
+              "formatArgs": ["--"],
+              "enableClippyPedantic": false,
+              "realTimeLinting": false,
+              "formatOnSave": false,
+              "testOnSave": false,
+              "checkOnSave": true,
+              "buildOnSave": true
+            }
+          },
+          "description": "Configuration profiles for different workflows."
         }
       }
     }

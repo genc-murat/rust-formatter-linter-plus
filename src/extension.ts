@@ -553,6 +553,40 @@ async function runRefactorSuggestions() {
     runCommand('cargo', ['fix', '--allow-dirty', '--allow-staged'], outputChannel, projectDir, 'cargo');
 }
 
+function loadProfile(profileName: string) {
+    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const profiles = config.get<{ [key: string]: any }>('profiles');
+    const profile = profiles ? profiles[profileName] : null;
+
+    if (profile) {
+        Object.keys(profile).forEach(key => {
+            config.update(key, profile[key], vscode.ConfigurationTarget.Global);
+        });
+        vscode.window.showInformationMessage(`Profile '${profileName}' applied.`);
+    } else {
+        vscode.window.showErrorMessage(`Profile '${profileName}' not found.`);
+    }
+}
+
+async function switchProfile() {
+    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const profiles = config.get<{ [key: string]: any }>('profiles');
+
+    if (!profiles) {
+        vscode.window.showErrorMessage('No profiles defined.');
+        return;
+    }
+
+    const profileNames = Object.keys(profiles);
+    const selectedProfile = await vscode.window.showQuickPick(profileNames, {
+        placeHolder: 'Select a configuration profile'
+    });
+
+    if (selectedProfile) {
+        loadProfile(selectedProfile);
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -840,7 +874,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
                     { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
                     { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
-                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' }
+                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
+                    { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -903,6 +938,9 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Run refactor suggestions':
                         vscode.commands.executeCommand('extension.runRefactorSuggestions');
                         break;
+                    case 'Switch Configuration Profile':
+                        vscode.commands.executeCommand('extension.switchProfile');
+                        break;
                 }
             }
         },
@@ -920,6 +958,10 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'extension.runRefactorSuggestions',
             callback: runRefactorSuggestions
+        },
+        {
+            command: 'extension.switchProfile',
+            callback: switchProfile
         }
     ];
 
@@ -980,7 +1022,6 @@ function runTerminalCommand(command: string, args: string[], terminal: vscode.Te
     terminal.sendText(`${command} ${args.join(' ')}`);
     terminal.show();
 }
-
 
 export function deactivate() {
     console.log('Rust Formatter and Linter Plus is now deactivated!');
