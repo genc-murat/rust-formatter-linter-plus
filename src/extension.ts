@@ -429,6 +429,74 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
     `;
 }
 
+// Toolchain management functions
+
+async function installToolchain() {
+    const toolchain = await vscode.window.showInputBox({
+        prompt: 'Enter the toolchain to install (e.g., stable, nightly, 1.53.0)'
+    });
+    if (toolchain) {
+        await runRustupCommand('toolchain install', [toolchain], `Installed Rust toolchain: ${toolchain}`);
+    }
+}
+
+async function updateToolchain() {
+    await runRustupCommand('update', [], 'Updated Rust toolchains');
+}
+
+async function switchToolchain() {
+    const toolchain = await vscode.window.showInputBox({
+        prompt: 'Enter the toolchain to switch to (e.g., stable, nightly, 1.53.0)'
+    });
+    if (toolchain) {
+        await runRustupCommand('default', [toolchain], `Switched to Rust toolchain: ${toolchain}`);
+    }
+}
+
+function createOutputChannel() {
+    if (!outputChannel) {
+        outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter Plus');
+    }
+    outputChannel.show(true);
+}
+
+
+async function runRustupCommand(command: string, args: string[], successMessage: string) {
+    createOutputChannel();
+    const fullCommand = `rustup ${command} ${args.join(' ')}`;
+    outputChannel.appendLine(`Running: ${fullCommand}`);
+
+    try {
+        const { stdout, stderr } = await execPromise(fullCommand);
+        outputChannel.appendLine(stdout);
+        if (stderr) {
+            outputChannel.appendLine(`stderr: ${stderr}`);
+        }
+        vscode.window.showInformationMessage(successMessage);
+    } catch (error) {
+        if (error instanceof Error) {
+            outputChannel.appendLine(`Error: ${error.message}`);
+            vscode.window.showErrorMessage(`Error: ${error.message}`);
+        } else {
+            outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
+            vscode.window.showErrorMessage(`Unknown error occurred.`);
+        }
+    }
+}
+
+
+function execPromise(command: string): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+        cp.exec(command, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve({ stdout, stderr });
+            }
+        });
+    });
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -723,6 +791,18 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
+            command: 'extension.installToolchain',
+            callback: installToolchain
+        },
+        {
+            command: 'extension.updateToolchain',
+            callback: updateToolchain
+        },
+        {
+            command: 'extension.switchToolchain',
+            callback: switchToolchain
+        },
+        {
             command: 'extension.showQuickPick',
             callback: async () => {
                 const items: vscode.QuickPickItem[] = [
@@ -737,7 +817,10 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
-                    { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' }
+                    { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
+                    { label: 'Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
+                    { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
+                    { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -784,6 +867,15 @@ export function activate(context: vscode.ExtensionContext) {
                         break;
                     case 'Show Workspace Diagnostics Summary':
                         vscode.commands.executeCommand('extension.workspaceDiagnosticsSummary');
+                        break;
+                    case 'Install Rust Toolchain':
+                        vscode.commands.executeCommand('extension.installToolchain');
+                        break;
+                    case 'Update Rust Toolchains':
+                        vscode.commands.executeCommand('extension.updateToolchain');
+                        break;
+                    case 'Switch Rust Toolchain':
+                        vscode.commands.executeCommand('extension.switchToolchain');
                         break;
                 }
             }

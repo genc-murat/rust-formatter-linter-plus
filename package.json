@@ -28,6 +28,9 @@
     "onCommand:extension.showQuickPick",
     "onCommand:extension.rustAnalyzer",
     "onCommand:extension.workspaceDiagnosticsSummary",
+    "onCommand:extension.installToolchain",
+    "onCommand:extension.updateToolchain",
+    "onCommand:extension.switchToolchain",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -116,6 +119,21 @@
       {
         "command": "extension.workspaceDiagnosticsSummary",
         "title": "Show Workspace Diagnostics Summary",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.installToolchain",
+        "title": "Install Rust Toolchain",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.updateToolchain",
+        "title": "Update Rust Toolchain",
+        "category": "Rust"
+      },
+      {
+        "command": "extension.switchToolchain",
+        "title": "Switch Rust Toolchain",
         "category": "Rust"
       }
     ],
