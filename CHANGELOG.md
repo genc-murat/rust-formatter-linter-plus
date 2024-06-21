@@ -2,46 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/), and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
-
-## [Unreleased]
+## [0.9.0] - 2024-06-22
 
 ### Added
-- Feature to format specific files with `cargo fmt`.
-- Feature to lint specific files with `cargo clippy`.
-- Enhanced output display in a dedicated output channel for all commands.
-
-### Fixed
-- Issue where `cargo test` output was not being displayed in the output channel.
-- Bug causing the extension to crash when no active editor was found.
-
-## [0.0.3] - 2024-06-21
-
-### Added
-- Command to check Rust code for compilation errors using `cargo check`.
-- Status bar button for quick access to the `cargo check` command.
-
-### Fixed
-- Minor improvements and bug fixes.
-
-## [0.0.2] - 2024-06-21
-
-### Added
-- Status bar buttons for quick access to format, lint, test, and fix commands.
-- Commands to format specific files with `cargo fmt`.
-- Commands to lint specific files with `cargo clippy`.
-- Improved handling of configuration files (`rustfmt.toml` and `clippy.toml`).
-
-### Fixed
-- Issue where output from commands was not correctly displayed in the output channel.
-
-## [0.0.1] - 2024-06-20
-
-### Added
-- Initial release with core features:
-  - Code Formatting with `cargo fmt`.
-  - Linting with `cargo clippy`.
-  - Testing with `cargo test`.
-  - Automatic Fixing with `cargo fix`.
-  - Configuration file editing.
-  - Customizable settings for format, lint, and test options.
+- **Code Formatting**: Automatically format your Rust code using `cargo fmt`.
+- **Linting**: Lint your Rust code with `cargo clippy` to catch common mistakes and improve code quality.
+- **Testing**: Run your Rust tests with `cargo test` and view the results directly in VS Code.
+- **Checking**: Check your Rust code for compilation errors using `cargo check`.
+- **Automatic Fixing**: Automatically fix common issues in your Rust code using `cargo fix`.
+- **Configuration Editing**: Easily edit your `rustfmt.toml` and `clippy.toml` configuration files within VS Code.
+- **Status Bar Integration**: Conveniently access format, lint, test, check, and fix commands from the VS Code status bar.
+- **Customizable Settings**: Configure format, lint, test, and check options through the VS Code settings.
+- **Real-time Linting**: Enable real-time linting feedback.
+- **Format on Save**: Automatically format your code on save.
+- **Run Tests on Save**: Automatically run tests on save.
+- **Run Check on Save**: Automatically check for errors on save.
+- **Run Build on Save**: Automatically build your code on save.
+- **Workspace Diagnostics**: Run diagnostics across the entire workspace and show a summary.
+- **Toolchain Management**: Install, update, and switch between Rust toolchains.
+- **Cargo Generate**: Scaffold new projects using `cargo-generate`.
+- **Refactor Suggestions**: Apply suggested refactorings using `cargo fix`.
+- **Configuration Profiles**: Switch between different configuration profiles for various workflows.
+- **Diagnostics Categories**: Enable or disable specific categories in the diagnostics report.
+- **Performance Suggestions**: Identify and optimize performance issues.
+- **Common Pitfalls**: Detect and avoid common pitfalls in Rust code.

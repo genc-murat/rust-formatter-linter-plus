@@ -1,6 +1,6 @@
-# Rust Formatter and Linter Plus
+# RustCodePro
 
-**Rust Formatter and Linter Plus** is a comprehensive VS Code extension designed to streamline Rust development. It provides functionalities such as code formatting, linting, testing, checking, and automatic fixing using `cargo fmt`, `cargo clippy`, `cargo test`, `cargo check`, and `cargo fix`.
+**RustCodePro** is a comprehensive VS Code extension designed to streamline Rust development. It provides functionalities such as code formatting, linting, testing, checking, and automatic fixing using `cargo fmt`, `cargo clippy`, `cargo test`, `cargo check`, and `cargo fix`.
 
 ## Features
 
@@ -12,12 +12,25 @@
 - **Configuration Editing**: Easily edit your `rustfmt.toml` and `clippy.toml` configuration files within VS Code.
 - **Status Bar Integration**: Conveniently access format, lint, test, check, and fix commands from the VS Code status bar.
 - **Customizable Settings**: Configure format, lint, test, and check options through the VS Code settings.
+- **Real-time Linting**: Enable real-time linting feedback.
+- **Format on Save**: Automatically format your code on save.
+- **Run Tests on Save**: Automatically run tests on save.
+- **Run Check on Save**: Automatically check for errors on save.
+- **Run Build on Save**: Automatically build your code on save.
+- **Workspace Diagnostics**: Run diagnostics across the entire workspace and show a summary.
+- **Toolchain Management**: Install, update, and switch between Rust toolchains.
+- **Cargo Generate**: Scaffold new projects using `cargo-generate`.
+- **Refactor Suggestions**: Apply suggested refactorings using `cargo fix`.
+- **Configuration Profiles**: Switch between different configuration profiles for various workflows.
+- **Diagnostics Categories**: Enable or disable specific categories in the diagnostics report.
+- **Performance Suggestions**: Identify and optimize performance issues.
+- **Common Pitfalls**: Detect and avoid common pitfalls in Rust code.
 
 ## Installation
 
 1. Open Visual Studio Code.
 2. Go to the Extensions view by clicking the Extensions icon in the Activity Bar on the side of the window or by pressing `Ctrl+Shift+X`.
-3. Search for "Rust Formatter and Linter Plus".
+3. Search for "RustCodePro".
 4. Click "Install" to install the extension.
 
 ## Usage
@@ -58,15 +71,50 @@
 - **Edit clippy.toml**: Edit the `clippy.toml` configuration file.
   - Command Palette: `Rust: Edit clippy.toml`
 
+- **Show Rust Commands**: Show available Rust commands.
+  - Command Palette: `Rust: Show Rust Commands`
+
+- **Run rust-analyzer diagnostics**: Run diagnostics using rust-analyzer.
+  - Command Palette: `Rust: Run rust-analyzer diagnostics`
+
+- **Show Workspace Diagnostics Summary**: Run diagnostics across the entire workspace and show a summary.
+  - Command Palette: `Rust: Show Workspace Diagnostics Summary`
+
+- **Install Rust Toolchain**: Install a specific Rust toolchain.
+  - Command Palette: `Rust: Install Rust Toolchain`
+
+- **Update Rust Toolchain**: Update all Rust toolchains.
+  - Command Palette: `Rust: Update Rust Toolchain`
+
+- **Switch Rust Toolchain**: Switch to a specific Rust toolchain.
+  - Command Palette: `Rust: Switch Rust Toolchain`
+
+- **Run cargo-generate**: Scaffold new projects using `cargo-generate`.
+  - Command Palette: `Rust: Run cargo-generate`
+
+- **Run refactor suggestions**: Apply suggested refactorings using `cargo fix`.
+  - Command Palette: `Rust: Run refactor suggestions`
+
+- **Switch Configuration Profile**: Switch between different configuration profiles for various workflows.
+  - Command Palette: `Rust: Switch Configuration Profile`
+
 ### Settings
 
-You can customize the extension settings by going to the VS Code settings (`Ctrl+,`) and searching for `Rust Formatter and Linter Plus`. The following settings are available:
+You can customize the extension settings by going to the VS Code settings (`Ctrl+,`) and searching for `RustCodePro`. The following settings are available:
 
+- `rustFormatterLinter.realTimeLinting`: Enable real-time linting feedback (default: `true`).
 - `rustFormatterLinter.formatOnSave`: Run `cargo fmt` on save (default: `true`).
 - `rustFormatterLinter.testOnSave`: Run `cargo test` on save (default: `false`).
 - `rustFormatterLinter.checkOnSave`: Run `cargo check` on save (default: `false`).
+- `rustFormatterLinter.buildOnSave`: Run `cargo build` on save (default: `false`).
 - `rustFormatterLinter.formatArgs`: Additional arguments for `cargo fmt`.
 - `rustFormatterLinter.lintArgs`: Additional arguments for `cargo clippy`.
+- `rustFormatterLinter.outputChannelName`: Name of the output channel (default: `Rust Formatter and Linter Plus`).
+- `rustFormatterLinter.autoClearOutput`: Automatically clear the output channel before each command (default: `false`).
+- `rustFormatterLinter.diagnosticsCommand`: Command to use for workspace diagnostics (`cargo check` or `cargo clippy`) (default: `cargo check`).
+- `rustFormatterLinter.enableClippyPedantic`: Enable Clippy pedantic lints for stricter code checks (default: `false`).
+- `rustFormatterLinter.profiles`: Configuration profiles for different workflows.
+- `rustFormatterLinter.diagnosticsCategories`: Enable/disable specific categories in the diagnostics report.
 
 ### Status Bar Integration
 
@@ -82,4 +130,4 @@ Special thanks to the Rust community and the contributors of the Rust tools and 
 
 ---
 
-We hope you find Rust Formatter and Linter Plus useful! If you have any questions, issues, or suggestions, please feel free to open an issue on the GitHub repository or contact us directly.
+We hope you find RustCodePro useful! If you have any questions, issues, or suggestions, please feel free to open an issue on the GitHub repository or contact us directly.
