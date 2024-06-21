@@ -310,7 +310,7 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
         outputChannel.appendLine(`Diagnostics for ${filePath}:`);
         diagnosticMap[filePath].forEach((diagnostic) => {
             outputChannel.appendLine(
-                `  Line ${diagnostic.range.start.line + 1}, Column ${
+                  `Line ${diagnostic.range.start.line + 1}, Column ${
                     diagnostic.range.start.character + 1
                 }: ${diagnostic.message}`
             );
@@ -393,8 +393,8 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
         })
         .join('');
 
-    panel.webview.html = `
-        <html>
+    panel.webview.html = 
+        `<html>
         <head>
             <style>
                 table {
@@ -431,8 +431,7 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
                 ${diagnosticsHtml}
             </table>
         </body>
-        </html>
-    `;
+        </html>`;
 }
 
 // Toolchain management functions
@@ -466,7 +465,6 @@ function createOutputChannel() {
     outputChannel.show(true);
 }
 
-
 async function runRustupCommand(command: string, args: string[], successMessage: string) {
     createOutputChannel();
     const fullCommand = `rustup ${command} ${args.join(' ')}`;
@@ -485,11 +483,10 @@ async function runRustupCommand(command: string, args: string[], successMessage:
             vscode.window.showErrorMessage(`Error: ${error.message}`);
         } else {
             outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
-            vscode.window.showErrorMessage(`Unknown error occurred.`);
+            vscode.window.showErrorMessage('Unknown error occurred.');
         }
     }
 }
-
 
 function execPromise(command: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
@@ -539,6 +536,20 @@ async function runCargoGenerate() {
     const args = ['generate', '--git', templateUrl, '--name', projectName];
 
     runCommand('cargo', args, outputChannel, cwd, 'cargo-generate');
+}
+
+async function runRefactorSuggestions() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
+    }
+    const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+    if (!projectDir) {
+        vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+        return;
+    }
+    runCommand('cargo', ['fix', '--allow-dirty', '--allow-staged'], outputChannel, projectDir, 'cargo');
 }
 
 export function activate(context: vscode.ExtensionContext) {
@@ -787,7 +798,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                runCommand('cargo fix', [], outputChannel, projectDir, 'cargo');
+                runCommand('cargo fix', ['--allow-dirty', '--allow-staged'], outputChannel, projectDir, 'cargo');
             }
         },
         {
