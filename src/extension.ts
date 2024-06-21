@@ -3,7 +3,33 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 
-function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: () => void) {
+let commandStatusBarItem: vscode.StatusBarItem;
+
+function createCommandStatusBarItem() {
+    if (!commandStatusBarItem) {
+        commandStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    }
+    commandStatusBarItem.show();
+}
+
+function updateCommandStatusBarItem(message: string, tooltip: string, success: boolean) {
+    if (commandStatusBarItem) {
+        if (success) {
+            commandStatusBarItem.text = `$(check) ${message}`;
+            commandStatusBarItem.tooltip = tooltip;
+        } else {
+            commandStatusBarItem.text = `$(alert) ${message}`;
+            commandStatusBarItem.tooltip = tooltip;
+        }
+        setTimeout(() => commandStatusBarItem.hide(), 5000);
+    }
+}
+
+function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: (success: boolean) => void) {
+    createCommandStatusBarItem();
+    commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
+    commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
+
     const process = cp.spawn(command, args, { shell: true, cwd: cwd });
     outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
 
@@ -22,16 +48,19 @@ function runCargoCommand(command: string, args: string[], outputChannel: vscode.
     process.on('close', (code) => {
         if (code !== 0) {
             vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
+            updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
         } else {
             vscode.window.showInformationMessage(`${command} completed successfully.`);
+            updateCommandStatusBarItem(`${command} completed`, `Successfully completed ${command}`, true);
         }
         if (onDone) {
-            onDone();
+            onDone(code === 0);
         }
     });
 
     process.on('error', (err) => {
         vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
+        updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
     });
 }
 
@@ -84,16 +113,17 @@ export function activate(context: vscode.ExtensionContext) {
         }
         const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         const args = config.get<string[]>('lintArgs') || [];
-        runCargoCommand('cargo clippy', args, outputChannel, projectDir, () => {
-            // Display lint errors and warnings
-            cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
-                if (error) {
-                    vscode.window.showErrorMessage('Cargo Clippy failed');
-                } else {
-                    const errors = parseClippyOutput(stdout);
-                    displayDiagnostics(errors, outputChannel);
-                }
-            });
+        runCargoCommand('cargo clippy', args, outputChannel, projectDir, (success) => {
+            if (success) {
+                cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
+                    if (error) {
+                        vscode.window.showErrorMessage('Cargo Clippy failed');
+                    } else {
+                        const errors = parseClippyOutput(stdout);
+                        displayDiagnostics(errors, outputChannel);
+                    }
+                });
+            }
         });
     });
 
