@@ -55,19 +55,19 @@ async function runCommand(
     commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
     commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
 
-    const process = cp.spawn(command, args, { shell: true, cwd: cwd });
+    const proc = cp.spawn(command, args, { shell: true, cwd: cwd });
 
-    process.stdout.on('data', (data) => {
+    proc.stdout.on('data', (data) => {
         const output = data.toString();
         outputChannel.appendLine(`stdout: ${output}`);
     });
 
-    process.stderr.on('data', (data) => {
+    proc.stderr.on('data', (data) => {
         const output = data.toString();
         outputChannel.appendLine(`stderr: ${output}`);
     });
 
-    process.on('close', (code) => {
+    proc.on('close', (code) => {
         if (code !== 0) {
             vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
             updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
@@ -82,7 +82,7 @@ async function runCommand(
         }
     });
 
-    process.on('error', (err) => {
+    proc.on('error', (err) => {
         vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
         updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
         outputChannel.appendLine(`[${timestamp}] Failed to start process: ${err.message}`);
