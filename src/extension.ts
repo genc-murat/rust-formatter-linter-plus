@@ -230,43 +230,20 @@ function openConfigFile(configPath: string, outputChannel: vscode.OutputChannel)
     outputChannel.appendLine(`Opened configuration file: ${configPath}`);
 }
 
-function parseClippyOutput(output: string): RustError[] {
+function parseDiagnosticsOutput(output: string): RustError[] {
     const errors: RustError[] = [];
-    const lines = output.split('\n');
-
-    lines.forEach((line) => {
-        const match = line.match(/^(.*):(\d+):(\d+):\s*(\w+):\s*(.*)$/);
-        if (match) {
-            const [, filePath, lineStr, columnStr, severity, message] = match;
-            errors.push({
-                filePath,
-                line: parseInt(lineStr, 10) - 1,
-                column: parseInt(columnStr, 10) - 1,
-                severity,
-                message
-            });
-        }
-    });
-
-    return errors;
-}
-
-function parseRustAnalyzerOutput(output: string): RustError[] {
-    const errors: RustError[] = [];
-    const lines = output.split('\n');
-
-    lines.forEach((line) => {
-        const match = line.match(/^(.*):(\d+):(\d+):\s*(\w+):\s*(.*)$/);
-        if (match) {
-            const [, filePath, lineStr, columnStr, severity, message] = match;
-            errors.push({
-                filePath,
-                line: parseInt(lineStr, 10) - 1,
-                column: parseInt(columnStr, 10) - 1,
-                severity,
-                message
-            });
-        }
+    const diagnostics = JSON.parse(output);
+    
+    diagnostics.forEach((diag: any) => {
+        const { code, message, range, severity } = diag;
+        const filePath = diag.file;
+        errors.push({
+            filePath,
+            line: range.start.line,
+            column: range.start.character,
+            severity: severity === 'error' ? 'Error' : 'Warning',
+            message: `${code}: ${message}`
+        });
     });
 
     return errors;
@@ -274,11 +251,11 @@ function parseRustAnalyzerOutput(output: string): RustError[] {
 
 function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     switch (severity) {
-        case 'error':
+        case 'Error':
             return vscode.DiagnosticSeverity.Error;
-        case 'warning':
+        case 'Warning':
             return vscode.DiagnosticSeverity.Warning;
-        case 'note':
+        case 'Information':
             return vscode.DiagnosticSeverity.Information;
         default:
             return vscode.DiagnosticSeverity.Information;
@@ -296,7 +273,7 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
             new vscode.Position(error.line, error.column + 1)
         );
         const diagnostic = new vscode.Diagnostic(range, error.message, mapSeverity(error.severity));
-        diagnostic.source = error.severity === 'error' ? 'clippy' : 'rust-analyzer';
+        diagnostic.source = error.severity === 'Error' ? 'clippy' : 'rust-analyzer';
         if (diagnosticMap[error.filePath]) {
             diagnosticMap[error.filePath].push(diagnostic);
         } else {
@@ -322,79 +299,57 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
     });
 }
 
-// New function to run workspace diagnostics
-async function runWorkspaceDiagnostics(command: string) {
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (!workspaceFolders) {
-        vscode.window.showErrorMessage('No workspace folders found.');
-        return;
-    }
-
-    const allDiagnostics: RustError[] = [];
-
-    for (const folder of workspaceFolders) {
-        const projectDir = findCargoTomlDir(folder.uri.fsPath);
-        if (!projectDir) {
-            vscode.window.showErrorMessage(`Cargo.toml not found in the workspace folder: ${folder.name}`);
-            continue;
-        }
-
-        const isWorkspace = isCargoWorkspace(projectDir);
-        const packageDir = isWorkspace ? await selectWorkspacePackage(projectDir) : projectDir;
-
-        if (!packageDir) {
-            vscode.window.showErrorMessage(`No package selected in the workspace folder: ${folder.name}`);
-            continue;
-        }
-
-        const args = ['--message-format=json'];
-        await new Promise<void>((resolve) => {
-            runCommand(command, args, outputChannel, packageDir, command, (success) => {
-                if (success) {
-                    cp.exec(`${command} --message-format=json`, { cwd: packageDir }, (error, stdout, stderr) => {
-                        if (error) {
-                            vscode.window.showErrorMessage(`${command} failed`);
-                        } else {
-                            const errors = parseClippyOutput(stdout);
-                            allDiagnostics.push(...errors);
-                        }
-                        resolve();
-                    });
-                } else {
-                    resolve();
-                }
-            });
-        });
-    }
-
-    displayDiagnostics(allDiagnostics, outputChannel);
-    showDiagnosticsSummary(allDiagnostics);
+function isPerformanceSuggestion(message: string): boolean {
+    return message.includes('consider') || message.includes('optimize');
 }
 
-// Function to show diagnostics summary in a webview
-function showDiagnosticsSummary(diagnostics: RustError[]) {
+function isCommonPitfall(message: string): boolean {
+    return message.includes('unnecessary') || message.includes('avoid');
+}
+
+function showDiagnosticsSummary(diagnostics: RustError[], performanceSuggestions: RustError[], commonPitfalls: RustError[]) {
     const panel = vscode.window.createWebviewPanel(
         'rustDiagnosticsSummary',
         'Rust Diagnostics Summary',
         vscode.ViewColumn.One,
-        {}
+        {
+            enableScripts: true
+        }
     );
 
-    const diagnosticsHtml = diagnostics
-        .map((diagnostic) => {
-            const severityClass = diagnostic.severity === 'error' ? 'error' : 'warning';
-            return `<tr class="${severityClass}">
-                        <td>${diagnostic.filePath}</td>
-                        <td>${diagnostic.line + 1}</td>
-                        <td>${diagnostic.column + 1}</td>
-                        <td>${diagnostic.severity}</td>
-                        <td>${diagnostic.message}</td>
-                    </tr>`;
-        })
-        .join('');
+    const diagnosticsHtml = diagnostics.map((diagnostic) => {
+        const severityClass = diagnostic.severity.toLowerCase();
+        return `<tr class="${severityClass}">
+                    <td>${diagnostic.filePath}</td>
+                    <td>${diagnostic.line + 1}</td>
+                    <td>${diagnostic.column + 1}</td>
+                    <td>${diagnostic.severity}</td>
+                    <td>${diagnostic.message}</td>
+                </tr>`;
+    }).join('');
 
-    panel.webview.html = 
-        `<html>
+    const performanceHtml = performanceSuggestions.map((suggestion) => {
+        return `<tr>
+                    <td>${suggestion.filePath}</td>
+                    <td>${suggestion.line + 1}</td>
+                    <td>${suggestion.column + 1}</td>
+                    <td>${suggestion.severity}</td>
+                    <td>${suggestion.message}</td>
+                </tr>`;
+    }).join('');
+
+    const pitfallsHtml = commonPitfalls.map((pitfall) => {
+        return `<tr>
+                    <td>${pitfall.filePath}</td>
+                    <td>${pitfall.line + 1}</td>
+                    <td>${pitfall.column + 1}</td>
+                    <td>${pitfall.severity}</td>
+                    <td>${pitfall.message}</td>
+                </tr>`;
+    }).join('');
+
+    panel.webview.html = `
+        <html>
         <head>
             <style>
                 table {
@@ -404,10 +359,10 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
                 th, td {
                     border: 1px solid #ddd;
                     padding: 8px;
-                    color: #EEF7FF;
+                    color: #F7EEDD;
                 }
                 th {
-                    background-color: #4D869C;
+                    background-color: #008DDA;
                     text-align: left;
                 }
                 .error {
@@ -430,11 +385,123 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
                 </tr>
                 ${diagnosticsHtml}
             </table>
+            <h2>Performance Suggestions</h2>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Line</th>
+                    <th>Column</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                </tr>
+                ${performanceHtml}
+            </table>
+            <h2>Common Pitfalls</h2>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Line</th>
+                    <th>Column</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                </tr>
+                ${pitfallsHtml}
+            </table>
         </body>
         </html>`;
 }
 
-// Toolchain management functions
+
+async function runWorkspaceDiagnostics(command: string) {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        vscode.window.showErrorMessage('No workspace folders found.');
+        return;
+    }
+
+    const allDiagnostics: RustError[] = [];
+    const performanceSuggestions: RustError[] = [];
+    const commonPitfalls: RustError[] = [];
+
+    for (const folder of workspaceFolders) {
+        const projectDir = findCargoTomlDir(folder.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage(`Cargo.toml not found in the workspace folder: ${folder.name}`);
+            continue;
+        }
+
+        const isWorkspace = isCargoWorkspace(projectDir);
+        const packageDir = isWorkspace ? await selectWorkspacePackage(projectDir) : projectDir;
+
+        if (!packageDir) {
+            vscode.window.showErrorMessage(`No package selected in the workspace folder: ${folder.name}`);
+            continue;
+        }
+
+        const args = ['clippy', '--message-format=json']; // Ensure the correct command for diagnostics
+        await new Promise<void>((resolve) => {
+            runCommand('cargo', args, outputChannel, packageDir, 'cargo', (success) => {
+                if (success) {
+                    cp.exec(`cargo ${args.join(' ')}`, { cwd: packageDir }, (error, stdout, stderr) => {
+                        if (error) {
+                            vscode.window.showErrorMessage(`cargo clippy failed`);
+                        } else {
+                            const errors = parseClippyOutput(stdout);
+                            allDiagnostics.push(...errors);
+
+                            errors.forEach(error => {
+                                if (isPerformanceSuggestion(error.message)) {
+                                    performanceSuggestions.push(error);
+                                } else if (isCommonPitfall(error.message)) {
+                                    commonPitfalls.push(error);
+                                }
+                            });
+                        }
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    displayDiagnostics(allDiagnostics, outputChannel);
+    showDiagnosticsSummary(allDiagnostics, performanceSuggestions, commonPitfalls);
+}
+
+
+function parseClippyOutput(output: string): RustError[] {
+    const errors: RustError[] = [];
+    const lines = output.split('\n');
+
+    lines.forEach(line => {
+        try {
+            const parsedLine = JSON.parse(line);
+            if (parsedLine.reason === 'compiler-message' && parsedLine.message) {
+                const message = parsedLine.message;
+                const primarySpan = message.spans.find((span: any) => span.is_primary);
+
+                if (primarySpan) {
+                    const rustError: RustError = {
+                        filePath: primarySpan.file_name,
+                        line: primarySpan.line_start - 1, // Convert to 0-based index
+                        column: primarySpan.column_start - 1, // Convert to 0-based index
+                        severity: message.level,
+                        message: message.rendered || message.message
+                    };
+                    errors.push(rustError);
+                }
+            }
+        } catch (e) {
+            // Skip lines that cannot be parsed
+        }
+    });
+
+    return errors;
+}
+
+
 
 async function installToolchain() {
     const toolchain = await vscode.window.showInputBox({
@@ -538,7 +605,6 @@ async function runCargoGenerate() {
     runCommand('cargo', args, outputChannel, cwd, 'cargo-generate');
 }
 
-// New function to run refactor suggestions
 async function runRefactorSuggestions() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {

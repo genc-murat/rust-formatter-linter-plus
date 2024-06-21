@@ -225,6 +225,16 @@
             }
           },
           "description": "Configuration profiles for different workflows."
+        },
+        "rustFormatterLinter.diagnosticsCategories": {
+          "type": "object",
+          "default": {
+            "errors": true,
+            "warnings": true,
+            "performance": true,
+            "pitfalls": true
+          },
+          "description": "Enable/disable specific categories in the diagnostics report."
         }
       }
     }
