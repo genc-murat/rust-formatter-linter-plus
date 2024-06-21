@@ -181,6 +181,20 @@ export function activate(context: vscode.ExtensionContext) {
         runCargoCommand('cargo run', [], outputChannel, projectDir);
     });
 
+    let benchCommand = vscode.commands.registerCommand('extension.rustBench', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo bench', [], outputChannel, projectDir);
+    });
+
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
         const projectDir = findCargoTomlDir(uri.fsPath);
         if (!projectDir) {
@@ -251,6 +265,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(docCommand);
     context.subscriptions.push(cleanCommand);
     context.subscriptions.push(runCommand);
+    context.subscriptions.push(benchCommand);
     context.subscriptions.push(formatFileCommand);
     context.subscriptions.push(lintFileCommand);
     context.subscriptions.push(editRustfmtConfigCommand);
@@ -298,6 +313,7 @@ export function activate(context: vscode.ExtensionContext) {
             { label: 'Run cargo doc', description: 'Generate documentation for Rust code' },
             { label: 'Run cargo clean', description: 'Clean Rust project' },
             { label: 'Run cargo run', description: 'Run Rust code' },
+            { label: 'Run cargo bench', description: 'Benchmark Rust code' },
             { label: 'Run cargo fix', description: 'Fix Rust code' }
         ];
 
@@ -333,6 +349,9 @@ export function activate(context: vscode.ExtensionContext) {
                 break;
             case 'Run cargo run':
                 vscode.commands.executeCommand('extension.rustRun');
+                break;
+            case 'Run cargo bench':
+                vscode.commands.executeCommand('extension.rustBench');
                 break;
             case 'Run cargo fix':
                 vscode.commands.executeCommand('extension.rustFix');
