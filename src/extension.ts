@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
+import * as toml from 'toml';
 
 interface RustError {
     filePath: string;
@@ -100,6 +101,47 @@ function findCargoTomlDir(currentDir: string): string | null {
     }
 
     return null;
+}
+
+function isCargoWorkspace(dir: string): boolean {
+    const cargoTomlPath = path.join(dir, 'Cargo.toml');
+    if (!fs.existsSync(cargoTomlPath)) {
+        return false;
+    }
+
+    const content = fs.readFileSync(cargoTomlPath, 'utf8');
+    const cargoToml = toml.parse(content);
+
+    return cargoToml.workspace !== undefined;
+}
+
+function getWorkspacePackages(dir: string): string[] {
+    const cargoTomlPath = path.join(dir, 'Cargo.toml');
+    if (!fs.existsSync(cargoTomlPath)) {
+        return [];
+    }
+
+    const content = fs.readFileSync(cargoTomlPath, 'utf8');
+    const cargoToml = toml.parse(content);
+
+    if (cargoToml.workspace && cargoToml.workspace.members) {
+        return cargoToml.workspace.members;
+    }
+
+    return [];
+}
+
+async function selectWorkspacePackage(dir: string): Promise<string | null> {
+    const packages = getWorkspacePackages(dir);
+    if (packages.length === 0) {
+        return null;
+    }
+
+    const selectedPackage = await vscode.window.showQuickPick(packages, {
+        placeHolder: 'Select a package'
+    });
+
+    return selectedPackage ? path.join(dir, selectedPackage) : null;
 }
 
 function checkRustAnalyzerInstalled(): boolean {
@@ -291,11 +333,19 @@ async function runWorkspaceDiagnostics(command: string) {
             continue;
         }
 
+        const isWorkspace = isCargoWorkspace(projectDir);
+        const packageDir = isWorkspace ? await selectWorkspacePackage(projectDir) : projectDir;
+
+        if (!packageDir) {
+            vscode.window.showErrorMessage(`No package selected in the workspace folder: ${folder.name}`);
+            continue;
+        }
+
         const args = ['--message-format=json'];
         await new Promise<void>((resolve) => {
-            runCommand(command, args, outputChannel, projectDir, command, (success) => {
+            runCommand(command, args, outputChannel, packageDir, command, (success) => {
                 if (success) {
-                    cp.exec(`${command} --message-format=json`, { cwd: projectDir }, (error, stdout, stderr) => {
+                    cp.exec(`${command} --message-format=json`, { cwd: packageDir }, (error, stdout, stderr) => {
                         if (error) {
                             vscode.window.showErrorMessage(`${command} failed`);
                         } else {
@@ -348,9 +398,10 @@ function showDiagnosticsSummary(diagnostics: RustError[]) {
                 th, td {
                     border: 1px solid #ddd;
                     padding: 8px;
+                    color: #EEF7FF;
                 }
                 th {
-                    background-color: #f2f2f2;
+                    background-color: #4D869C;
                     text-align: left;
                 }
                 .error {
