@@ -403,24 +403,37 @@ export function deactivate() {
 function parseClippyOutput(output: string): Map<string, vscode.Diagnostic[]> {
     const diagnostics = new Map<string, vscode.Diagnostic[]>();
     const lines = output.split('\n');
-    for (const line of lines) {
+    let currentFilePath: string | null = null;
+    let currentDiagnostic: vscode.Diagnostic | null = null;
+
+    lines.forEach((line) => {
         const match = line.match(/^(.*):(\d+):(\d+):\s*(\w+):\s*(.*)$/);
         if (match) {
+            // Found a new diagnostic entry
             const [ , filePath, lineStr, columnStr, severity, message ] = match;
             const line = parseInt(lineStr, 10) - 1;
             const column = parseInt(columnStr, 10) - 1;
             const range = new vscode.Range(new vscode.Position(line, column), new vscode.Position(line, column));
-            const diagnostic = new vscode.Diagnostic(range, message, mapSeverity(severity));
-            diagnostic.source = 'clippy';
+            currentDiagnostic = new vscode.Diagnostic(range, message, mapSeverity(severity));
+            currentDiagnostic.source = 'clippy';
 
-            if (!diagnostics.has(filePath)) {
-                diagnostics.set(filePath, []);
+            currentFilePath = filePath;
+            if (!diagnostics.has(currentFilePath)) {
+                diagnostics.set(currentFilePath, []);
             }
-            diagnostics.get(filePath)!.push(diagnostic);
+            diagnostics.get(currentFilePath)!.push(currentDiagnostic);
+        } else if (currentDiagnostic && line.trim().startsWith('note:')) {
+            // Found an additional note for the current diagnostic
+            currentDiagnostic.message += `\n${line.trim()}`;
+        } else if (currentDiagnostic && currentFilePath) {
+            // Append additional lines to the current diagnostic message
+            currentDiagnostic.message += `\n${line.trim()}`;
         }
-    }
+    });
+
     return diagnostics;
 }
+
 
 function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     switch (severity) {
