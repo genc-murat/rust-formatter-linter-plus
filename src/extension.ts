@@ -5,6 +5,7 @@ import * as path from 'path';
 
 let commandStatusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
+const diagnosticCollection = vscode.languages.createDiagnosticCollection('rust');
 
 function createCommandStatusBarItem() {
     if (!commandStatusBarItem) {
@@ -434,7 +435,6 @@ function parseClippyOutput(output: string): Map<string, vscode.Diagnostic[]> {
     return diagnostics;
 }
 
-
 function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     switch (severity) {
         case 'error':
@@ -449,7 +449,6 @@ function mapSeverity(severity: string): vscode.DiagnosticSeverity {
 }
 
 function displayDiagnostics(diagnostics: Map<string, vscode.Diagnostic[]>, outputChannel: vscode.OutputChannel) {
-    const diagnosticCollection = vscode.languages.createDiagnosticCollection('rust');
     diagnosticCollection.clear();
 
     diagnostics.forEach((diagnostics, filePath) => {
@@ -458,6 +457,8 @@ function displayDiagnostics(diagnostics: Map<string, vscode.Diagnostic[]>, outpu
         outputChannel.appendLine(`Diagnostics for ${filePath}:`);
         diagnostics.forEach(diagnostic => {
             outputChannel.appendLine(`  Line ${diagnostic.range.start.line + 1}, Column ${diagnostic.range.start.character + 1}: ${diagnostic.message}`);
+            const fileLink = vscode.Uri.file(filePath).with({ fragment: `${diagnostic.range.start.line + 1},${diagnostic.range.start.character + 1}` });
+            outputChannel.appendLine(`  [Open in editor](${fileLink})`);
         });
     });
 }
