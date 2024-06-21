@@ -27,50 +27,7 @@ function updateCommandStatusBarItem(message: string, tooltip: string, success: b
     }
 }
 
-function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: (success: boolean) => void) {
-    createCommandStatusBarItem();
-    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
-    if (config.get<boolean>('autoClearOutput')) {
-        outputChannel.clear();
-    }
-    commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
-    commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
-
-    const process = cp.spawn(command, args, { shell: true, cwd: cwd });
-    outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
-
-    process.stdout.on('data', (data) => {
-        const output = data.toString();
-        console.log(`stdout: ${output}`); // Debugging statement
-        outputChannel.appendLine(output);
-    });
-
-    process.stderr.on('data', (data) => {
-        const output = data.toString();
-        console.error(`stderr: ${output}`); // Debugging statement
-        outputChannel.appendLine(output);
-    });
-
-    process.on('close', (code) => {
-        if (code !== 0) {
-            vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
-            updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
-        } else {
-            vscode.window.showInformationMessage(`${command} completed successfully.`);
-            updateCommandStatusBarItem(`${command} completed`, `Successfully completed ${command}`, true);
-        }
-        if (onDone) {
-            onDone(code === 0);
-        }
-    });
-
-    process.on('error', (err) => {
-        vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
-        updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
-    });
-}
-
-function runRustAnalyzerCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: (success: boolean) => void) {
+function runCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, source: string, onDone?: (success: boolean) => void) {
     createCommandStatusBarItem();
     const config = vscode.workspace.getConfiguration('rustFormatterLinter');
     if (config.get<boolean>('autoClearOutput')) {
@@ -156,7 +113,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         const args = config.get<string[]>('formatArgs') || [];
-        runCargoCommand('cargo fmt', args, outputChannel, projectDir);
+        runCommand('cargo fmt', args, outputChannel, projectDir, 'cargo');
     });
 
     let lintCommand = vscode.commands.registerCommand('extension.rustClippy', () => {
@@ -171,7 +128,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         const args = config.get<string[]>('lintArgs') || [];
-        runCargoCommand('cargo clippy', args, outputChannel, projectDir, (success) => {
+        runCommand('cargo clippy', args, outputChannel, projectDir, 'cargo', (success) => {
             if (success) {
                 cp.exec('cargo clippy', { cwd: projectDir }, (error, stdout, stderr) => {
                     if (error) {
@@ -196,7 +153,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo test', [], outputChannel, projectDir);
+        runCommand('cargo test', [], outputChannel, projectDir, 'cargo');
     });
 
     let checkCommand = vscode.commands.registerCommand('extension.rustCheck', () => {
@@ -210,7 +167,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo check', [], outputChannel, projectDir);
+        runCommand('cargo check', [], outputChannel, projectDir, 'cargo');
     });
 
     let buildCommand = vscode.commands.registerCommand('extension.rustBuild', () => {
@@ -224,7 +181,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo build', [], outputChannel, projectDir);
+        runCommand('cargo build', [], outputChannel, projectDir, 'cargo');
     });
 
     let docCommand = vscode.commands.registerCommand('extension.rustDoc', () => {
@@ -238,7 +195,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo doc', ['--open'], outputChannel, projectDir);
+        runCommand('cargo doc', ['--open'], outputChannel, projectDir, 'cargo');
     });
 
     let cleanCommand = vscode.commands.registerCommand('extension.rustClean', () => {
@@ -252,10 +209,10 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo clean', [], outputChannel, projectDir);
+        runCommand('cargo clean', [], outputChannel, projectDir, 'cargo');
     });
 
-    let runCommand = vscode.commands.registerCommand('extension.rustRun', () => {
+    let runCommandHandler = vscode.commands.registerCommand('extension.rustRun', () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showErrorMessage('No active editor found.');
@@ -266,7 +223,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo run', [], outputChannel, projectDir);
+        runCommand('cargo run', [], outputChannel, projectDir, 'cargo');
     });
 
     let benchCommand = vscode.commands.registerCommand('extension.rustBench', () => {
@@ -280,7 +237,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo bench', [], outputChannel, projectDir);
+        runCommand('cargo bench', [], outputChannel, projectDir, 'cargo');
     });
 
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
@@ -289,7 +246,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo fmt --', [uri.fsPath], outputChannel, projectDir);
+        runCommand('cargo fmt --', [uri.fsPath], outputChannel, projectDir, 'cargo');
     });
 
     let lintFileCommand = vscode.commands.registerCommand('extension.rustClippyFile', (uri: vscode.Uri) => {
@@ -298,7 +255,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo clippy --', ['--', uri.fsPath], outputChannel, projectDir);
+        runCommand('cargo clippy --', ['--', uri.fsPath], outputChannel, projectDir, 'cargo');
     });
 
     let editRustfmtConfigCommand = vscode.commands.registerCommand('extension.editRustfmtConfig', () => {
@@ -342,7 +299,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runCargoCommand('cargo fix', [], outputChannel, projectDir);
+        runCommand('cargo fix', [], outputChannel, projectDir, 'cargo');
     });
 
     let rustAnalyzerCommand = vscode.commands.registerCommand('extension.rustAnalyzer', () => {
@@ -361,7 +318,7 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        runRustAnalyzerCommand('rust-analyzer', ['diagnostics', projectDir], outputChannel, projectDir, (success) => {
+        runCommand('rust-analyzer', ['diagnostics', projectDir], outputChannel, projectDir, 'rust-analyzer', (success) => {
             if (success) {
                 cp.exec(`rust-analyzer diagnostics ${projectDir}`, { cwd: projectDir }, (error, stdout, stderr) => {
                     if (error) {
@@ -382,7 +339,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(buildCommand);
     context.subscriptions.push(docCommand);
     context.subscriptions.push(cleanCommand);
-    context.subscriptions.push(runCommand);
+    context.subscriptions.push(runCommandHandler);
     context.subscriptions.push(benchCommand);
     context.subscriptions.push(formatFileCommand);
     context.subscriptions.push(lintFileCommand);
@@ -399,16 +356,16 @@ export function activate(context: vscode.ExtensionContext) {
                 return;
             }
             if (config.get<boolean>('formatOnSave')) {
-                runCargoCommand('cargo fmt', [], outputChannel, projectDir);
+                runCommand('cargo fmt', [], outputChannel, projectDir, 'cargo');
             }
             if (config.get<boolean>('testOnSave')) {
-                runCargoCommand('cargo test', [], outputChannel, projectDir);
+                runCommand('cargo test', [], outputChannel, projectDir, 'cargo');
             }
             if (config.get<boolean>('checkOnSave')) {
-                runCargoCommand('cargo check', [], outputChannel, projectDir);
+                runCommand('cargo check', [], outputChannel, projectDir, 'cargo');
             }
             if (config.get<boolean>('buildOnSave')) {
-                runCargoCommand('cargo build', [], outputChannel, projectDir);
+                runCommand('cargo build', [], outputChannel, projectDir, 'cargo');
             }
         }
     });
