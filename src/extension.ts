@@ -15,7 +15,6 @@ let commandStatusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
 const diagnosticCollection = vscode.languages.createDiagnosticCollection('rust');
 
-// Function to create a command status bar item
 function createCommandStatusBarItem() {
     if (!commandStatusBarItem) {
         commandStatusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
@@ -23,7 +22,6 @@ function createCommandStatusBarItem() {
     commandStatusBarItem.show();
 }
 
-// Function to update the command status bar item
 function updateCommandStatusBarItem(message: string, tooltip: string, success: boolean) {
     if (commandStatusBarItem) {
         if (success) {
@@ -37,7 +35,6 @@ function updateCommandStatusBarItem(message: string, tooltip: string, success: b
     }
 }
 
-// Function to run a command
 async function runCommand(
     command: string,
     args: string[],
@@ -91,7 +88,6 @@ async function runCommand(
     });
 }
 
-// Function to find the directory containing Cargo.toml
 function findCargoTomlDir(currentDir: string): string | null {
     const rootDir = path.parse(currentDir).root;
     let dir = currentDir;
@@ -106,7 +102,6 @@ function findCargoTomlDir(currentDir: string): string | null {
     return null;
 }
 
-// Function to check if rust-analyzer is installed
 function checkRustAnalyzerInstalled(): boolean {
     try {
         cp.execSync('rust-analyzer --version', { stdio: 'ignore' });
@@ -116,7 +111,6 @@ function checkRustAnalyzerInstalled(): boolean {
     }
 }
 
-// Function to show additional options for specific commands
 async function showAdditionalOptions(command: string): Promise<string[]> {
     const options = [];
     if (command === 'cargo build') {
@@ -178,7 +172,6 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
     return options;
 }
 
-// Function to open a configuration file
 function openConfigFile(configPath: string, outputChannel: vscode.OutputChannel) {
     if (!fs.existsSync(configPath)) {
         fs.writeFileSync(configPath, '');
@@ -189,7 +182,6 @@ function openConfigFile(configPath: string, outputChannel: vscode.OutputChannel)
     outputChannel.appendLine(`Opened configuration file: ${configPath}`);
 }
 
-// Function to parse Clippy output into an array of RustError objects
 function parseClippyOutput(output: string): RustError[] {
     const errors: RustError[] = [];
     const lines = output.split('\n');
@@ -211,7 +203,6 @@ function parseClippyOutput(output: string): RustError[] {
     return errors;
 }
 
-// Function to parse rust-analyzer output into an array of RustError objects
 function parseRustAnalyzerOutput(output: string): RustError[] {
     const errors: RustError[] = [];
     const lines = output.split('\n');
@@ -233,7 +224,6 @@ function parseRustAnalyzerOutput(output: string): RustError[] {
     return errors;
 }
 
-// Function to map severity string to vscode.DiagnosticSeverity
 function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     switch (severity) {
         case 'error':
@@ -247,7 +237,6 @@ function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     }
 }
 
-// Function to display diagnostics in the editor and output channel
 function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.OutputChannel) {
     diagnosticCollection.clear();
     const diagnosticMap: { [key: string]: vscode.Diagnostic[] } = {};
@@ -285,7 +274,6 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
     });
 }
 
-// Extension activation function
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -294,7 +282,6 @@ export function activate(context: vscode.ExtensionContext) {
     outputChannel = vscode.window.createOutputChannel(outputChannelName);
     outputChannel.show(true);
 
-    // Register commands
     const commands = [
         {
             command: 'extension.rustFmt',
@@ -649,7 +636,34 @@ export function activate(context: vscode.ExtensionContext) {
         context.subscriptions.push(disposable);
     });
 
-    // Run on save functionality
+    // Real-time linting and formatting feedback
+    vscode.workspace.onDidChangeTextDocument((event) => {
+        const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+        if (config.get<boolean>('realTimeLinting')) {
+            const editor = vscode.window.activeTextEditor;
+            if (editor && editor.document.languageId === 'rust') {
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+                const args = ['--message-format=json', '--'];
+                runCommand('cargo clippy', args, outputChannel, projectDir, 'cargo', (success) => {
+                    if (success) {
+                        cp.exec('cargo clippy --message-format=json', { cwd: projectDir }, (error, stdout, stderr) => {
+                            if (error) {
+                                vscode.window.showErrorMessage('Cargo Clippy failed');
+                            } else {
+                                const errors = parseClippyOutput(stdout);
+                                displayDiagnostics(errors, outputChannel);
+                            }
+                        });
+                    }
+                });
+            }
+        }
+    });
+
     vscode.workspace.onDidSaveTextDocument((document) => {
         if (document.languageId === 'rust') {
             const projectDir = findCargoTomlDir(document.uri.fsPath);
@@ -672,7 +686,6 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
-    // Status bar item for Rust commands
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'extension.showQuickPick';
     statusBarItem.text = '$(menu) Rust Actions';
@@ -681,7 +694,6 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(statusBarItem);
 }
 
-// Extension deactivation function
 export function deactivate() {
     console.log('Rust Formatter and Linter Plus is now deactivated!');
 }
