@@ -2,7 +2,7 @@
   "name": "rust-formatter-linter",
   "displayName": "Rust Formatter and Linter",
   "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, and fix.",
-  "version": "0.0.4",
+  "version": "0.0.5",
   "publisher": "gencmurat",
   "engines": {
     "vscode": "^1.90.0"
@@ -27,6 +27,7 @@
     "onCommand:extension.rustFix",
     "onCommand:extension.showQuickPick",
     "onCommand:extension.rustAnalyzer",
+    "onCommand:extension.workspaceDiagnosticsSummary",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -111,6 +112,11 @@
         "command": "extension.rustAnalyzer",
         "title": "Run rust-analyzer diagnostics",
         "category": "Rust"
+      },
+      {
+        "command": "extension.workspaceDiagnosticsSummary",
+        "title": "Show Workspace Diagnostics Summary",
+        "category": "Rust"
       }
     ],
     "configuration": {
@@ -161,6 +167,11 @@
           "type": "boolean",
           "default": false,
           "description": "Automatically clear the output channel before each command"
+        },
+        "rustFormatterLinter.diagnosticsCommand": {
+          "type": "string",
+          "default": "cargo check",
+          "description": "Command to use for workspace diagnostics (cargo check or cargo clippy)"
         }
       }
     }

@@ -274,6 +274,110 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
     });
 }
 
+// New function to run workspace diagnostics
+async function runWorkspaceDiagnostics(command: string) {
+    const workspaceFolders = vscode.workspace.workspaceFolders;
+    if (!workspaceFolders) {
+        vscode.window.showErrorMessage('No workspace folders found.');
+        return;
+    }
+
+    const allDiagnostics: RustError[] = [];
+
+    for (const folder of workspaceFolders) {
+        const projectDir = findCargoTomlDir(folder.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage(`Cargo.toml not found in the workspace folder: ${folder.name}`);
+            continue;
+        }
+
+        const args = ['--message-format=json'];
+        await new Promise<void>((resolve) => {
+            runCommand(command, args, outputChannel, projectDir, command, (success) => {
+                if (success) {
+                    cp.exec(`${command} --message-format=json`, { cwd: projectDir }, (error, stdout, stderr) => {
+                        if (error) {
+                            vscode.window.showErrorMessage(`${command} failed`);
+                        } else {
+                            const errors = parseClippyOutput(stdout);
+                            allDiagnostics.push(...errors);
+                        }
+                        resolve();
+                    });
+                } else {
+                    resolve();
+                }
+            });
+        });
+    }
+
+    displayDiagnostics(allDiagnostics, outputChannel);
+    showDiagnosticsSummary(allDiagnostics);
+}
+
+// Function to show diagnostics summary in a webview
+function showDiagnosticsSummary(diagnostics: RustError[]) {
+    const panel = vscode.window.createWebviewPanel(
+        'rustDiagnosticsSummary',
+        'Rust Diagnostics Summary',
+        vscode.ViewColumn.One,
+        {}
+    );
+
+    const diagnosticsHtml = diagnostics
+        .map((diagnostic) => {
+            const severityClass = diagnostic.severity === 'error' ? 'error' : 'warning';
+            return `<tr class="${severityClass}">
+                        <td>${diagnostic.filePath}</td>
+                        <td>${diagnostic.line + 1}</td>
+                        <td>${diagnostic.column + 1}</td>
+                        <td>${diagnostic.severity}</td>
+                        <td>${diagnostic.message}</td>
+                    </tr>`;
+        })
+        .join('');
+
+    panel.webview.html = `
+        <html>
+        <head>
+            <style>
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                th, td {
+                    border: 1px solid #ddd;
+                    padding: 8px;
+                }
+                th {
+                    background-color: #f2f2f2;
+                    text-align: left;
+                }
+                .error {
+                    color: red;
+                }
+                .warning {
+                    color: orange;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Rust Diagnostics Summary</h1>
+            <table>
+                <tr>
+                    <th>File</th>
+                    <th>Line</th>
+                    <th>Column</th>
+                    <th>Severity</th>
+                    <th>Message</th>
+                </tr>
+                ${diagnosticsHtml}
+            </table>
+        </body>
+        </html>
+    `;
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
@@ -581,7 +685,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo run', description: 'Run Rust code' },
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
-                    { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' }
+                    { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
+                    { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -626,7 +731,17 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Run rust-analyzer diagnostics':
                         vscode.commands.executeCommand('extension.rustAnalyzer');
                         break;
+                    case 'Show Workspace Diagnostics Summary':
+                        vscode.commands.executeCommand('extension.workspaceDiagnosticsSummary');
+                        break;
                 }
+            }
+        },
+        {
+            command: 'extension.workspaceDiagnosticsSummary',
+            callback: async () => {
+                const command = config.get<string>('diagnosticsCommand') || 'cargo check';
+                await runWorkspaceDiagnostics(command);
             }
         }
     ];
