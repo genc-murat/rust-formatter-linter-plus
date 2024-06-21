@@ -33,31 +33,33 @@ function runCommand(command: string, args: string[], outputChannel: vscode.Outpu
     if (config.get<boolean>('autoClearOutput')) {
         outputChannel.clear();
     }
+
+    const timestamp = new Date().toLocaleString();
+    outputChannel.appendLine(`\n[${timestamp}] Running: ${command} ${args.join(' ')} in ${cwd}`);
     commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
     commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
 
     const process = cp.spawn(command, args, { shell: true, cwd: cwd });
-    outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
 
     process.stdout.on('data', (data) => {
         const output = data.toString();
-        console.log(`stdout: ${output}`); // Debugging statement
-        outputChannel.appendLine(output);
+        outputChannel.appendLine(`stdout: ${output}`);
     });
 
     process.stderr.on('data', (data) => {
         const output = data.toString();
-        console.error(`stderr: ${output}`); // Debugging statement
-        outputChannel.appendLine(output);
+        outputChannel.appendLine(`stderr: ${output}`);
     });
 
     process.on('close', (code) => {
         if (code !== 0) {
             vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
             updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
+            outputChannel.appendLine(`[${timestamp}] ${command} failed with exit code ${code}`);
         } else {
             vscode.window.showInformationMessage(`${command} completed successfully.`);
             updateCommandStatusBarItem(`${command} completed`, `Successfully completed ${command}`, true);
+            outputChannel.appendLine(`[${timestamp}] ${command} completed successfully.`);
         }
         if (onDone) {
             onDone(code === 0);
@@ -67,6 +69,7 @@ function runCommand(command: string, args: string[], outputChannel: vscode.Outpu
     process.on('error', (err) => {
         vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
         updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
+        outputChannel.appendLine(`[${timestamp}] Failed to start process: ${err.message}`);
     });
 }
 
