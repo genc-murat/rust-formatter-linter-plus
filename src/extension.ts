@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 let commandStatusBarItem: vscode.StatusBarItem;
+let outputChannel: vscode.OutputChannel;
 
 function createCommandStatusBarItem() {
     if (!commandStatusBarItem) {
@@ -27,6 +28,10 @@ function updateCommandStatusBarItem(message: string, tooltip: string, success: b
 
 function runCargoCommand(command: string, args: string[], outputChannel: vscode.OutputChannel, cwd: string, onDone?: (success: boolean) => void) {
     createCommandStatusBarItem();
+    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    if (config.get<boolean>('autoClearOutput')) {
+        outputChannel.clear();
+    }
     commandStatusBarItem.text = `$(sync~spin) Running: ${command}`;
     commandStatusBarItem.tooltip = `Running: ${command} ${args.join(' ')} in ${cwd}`;
 
@@ -81,7 +86,9 @@ function findCargoTomlDir(currentDir: string): string | null {
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
-    const outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter Plus');
+    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const outputChannelName = config.get<string>('outputChannelName') || 'Rust Formatter and Linter Plus';
+    outputChannel = vscode.window.createOutputChannel(outputChannelName);
     outputChannel.show(true); // Ensure the output channel is shown
 
     let formatCommand = vscode.commands.registerCommand('extension.rustFmt', () => {
@@ -95,7 +102,6 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         const args = config.get<string[]>('formatArgs') || [];
         runCargoCommand('cargo fmt', args, outputChannel, projectDir);
     });
@@ -111,7 +117,6 @@ export function activate(context: vscode.ExtensionContext) {
             vscode.window.showErrorMessage('Cargo.toml not found in the project.');
             return;
         }
-        const config = vscode.workspace.getConfiguration('rustFormatterLinter');
         const args = config.get<string[]>('lintArgs') || [];
         runCargoCommand('cargo clippy', args, outputChannel, projectDir, (success) => {
             if (success) {
@@ -309,7 +314,6 @@ export function activate(context: vscode.ExtensionContext) {
                 vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                 return;
             }
-            const config = vscode.workspace.getConfiguration('rustFormatterLinter');
             if (config.get<boolean>('formatOnSave')) {
                 runCargoCommand('cargo fmt', [], outputChannel, projectDir);
             }

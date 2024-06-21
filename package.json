@@ -140,6 +140,16 @@
             "type": "array",
             "default": [],
             "description": "Additional arguments for cargo clippy"
+          },
+          "rustFormatterLinter.outputChannelName": {
+            "type": "string",
+            "default": "Rust Formatter and Linter Plus",
+            "description": "Name of the output channel"
+          },
+          "rustFormatterLinter.autoClearOutput": {
+            "type": "boolean",
+            "default": false,
+            "description": "Automatically clear the output channel before each command"
           }
         }
       }
@@ -168,4 +178,3 @@
       "@vscode/test-electron": "^2.4.0"
     }
   }
-  
