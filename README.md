@@ -1,16 +1,17 @@
 # Rust Formatter and Linter Plus
 
-**Rust Formatter and Linter Plus** is a comprehensive VS Code extension designed to streamline Rust development. It provides functionalities such as code formatting, linting, testing, and automatic fixing using `cargo fmt`, `cargo clippy`, `cargo test`, and `cargo fix`.
+**Rust Formatter and Linter Plus** is a comprehensive VS Code extension designed to streamline Rust development. It provides functionalities such as code formatting, linting, testing, checking, and automatic fixing using `cargo fmt`, `cargo clippy`, `cargo test`, `cargo check`, and `cargo fix`.
 
 ## Features
 
 - **Code Formatting**: Automatically format your Rust code using `cargo fmt`.
 - **Linting**: Lint your Rust code with `cargo clippy` to catch common mistakes and improve code quality.
 - **Testing**: Run your Rust tests with `cargo test` and view the results directly in VS Code.
+- **Checking**: Check your Rust code for compilation errors using `cargo check`.
 - **Automatic Fixing**: Automatically fix common issues in your Rust code using `cargo fix`.
 - **Configuration Editing**: Easily edit your `rustfmt.toml` and `clippy.toml` configuration files within VS Code.
-- **Status Bar Integration**: Conveniently access format, lint, test, and fix commands from the VS Code status bar.
-- **Customizable Settings**: Configure format, lint, and test options through the VS Code settings.
+- **Status Bar Integration**: Conveniently access format, lint, test, check, and fix commands from the VS Code status bar.
+- **Customizable Settings**: Configure format, lint, test, and check options through the VS Code settings.
 
 ## Installation
 
@@ -34,6 +35,10 @@
 - **Run cargo test**: Run your Rust tests using `cargo test`.
   - Command Palette: `Rust: Run cargo test`
   - Status Bar: Click the `$(beaker) Rust Test` button
+
+- **Run cargo check**: Check your Rust code for compilation errors using `cargo check`.
+  - Command Palette: `Rust: Run cargo check`
+  - Status Bar: Click the `$(checklist) Rust Check` button
 
 - **Run cargo fix**: Automatically fix common issues in your Rust code using `cargo fix`.
   - Command Palette: `Rust: Run cargo fix`
@@ -59,17 +64,17 @@ You can customize the extension settings by going to the VS Code settings (`Ctrl
 
 - `rustFormatterLinter.formatOnSave`: Run `cargo fmt` on save (default: `true`).
 - `rustFormatterLinter.testOnSave`: Run `cargo test` on save (default: `false`).
+- `rustFormatterLinter.checkOnSave`: Run `cargo check` on save (default: `false`).
 - `rustFormatterLinter.formatArgs`: Additional arguments for `cargo fmt`.
 - `rustFormatterLinter.lintArgs`: Additional arguments for `cargo clippy`.
 
 ### Status Bar Integration
 
-The extension adds convenient buttons to the VS Code status bar for quick access to format, lint, test, and fix commands. Simply click the corresponding button to run the desired command.
+The extension adds convenient buttons to the VS Code status bar for quick access to format, lint, test, check, and fix commands. Simply click the corresponding button to run the desired command.
 
 ## Contributing
 
 If you would like to contribute to this project, please fork the repository and submit a pull request. We welcome all contributions!
-
 
 ## Acknowledgements
 

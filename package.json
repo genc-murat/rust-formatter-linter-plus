@@ -2,7 +2,7 @@
   "name": "rust-formatter-linter",
   "displayName": "Rust Formatter and Linter",
   "description": "A comprehensive VS Code extension to format, lint, test, and fix Rust code using cargo fmt, clippy, test, and fix.",
-  "version": "0.0.11",
+  "version": "0.0.3",
   "publisher": "gencmurat",
   "engines": {
       "vscode": "^1.90.0"

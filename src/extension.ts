@@ -8,11 +8,15 @@ function runCargoCommand(command: string, args: string[], outputChannel: vscode.
     outputChannel.appendLine(`Running: ${command} ${args.join(' ')} in ${cwd}`);
 
     process.stdout.on('data', (data) => {
-        outputChannel.appendLine(data.toString());
+        const output = data.toString();
+        console.log(`stdout: ${output}`); // Debugging statement
+        outputChannel.appendLine(output);
     });
 
     process.stderr.on('data', (data) => {
-        outputChannel.appendLine(data.toString());
+        const output = data.toString();
+        console.error(`stderr: ${output}`); // Debugging statement
+        outputChannel.appendLine(output);
     });
 
     process.on('close', (code) => {
@@ -24,6 +28,10 @@ function runCargoCommand(command: string, args: string[], outputChannel: vscode.
         if (onDone) {
             onDone();
         }
+    });
+
+    process.on('error', (err) => {
+        vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
     });
 }
 
@@ -45,6 +53,7 @@ export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Formatter and Linter Plus is now active!');
 
     const outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter Plus');
+    outputChannel.show(true); // Ensure the output channel is shown
 
     let formatCommand = vscode.commands.registerCommand('extension.rustFmt', () => {
         const editor = vscode.window.activeTextEditor;
@@ -82,7 +91,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo Clippy failed');
                 } else {
                     const errors = parseClippyOutput(stdout);
-                    displayDiagnostics(errors);
+                    displayDiagnostics(errors, outputChannel);
                 }
             });
         });
@@ -100,6 +109,20 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         runCargoCommand('cargo test', [], outputChannel, projectDir);
+    });
+
+    let checkCommand = vscode.commands.registerCommand('extension.rustCheck', () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showErrorMessage('No active editor found.');
+            return;
+        }
+        const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+        if (!projectDir) {
+            vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+            return;
+        }
+        runCargoCommand('cargo check', [], outputChannel, projectDir);
     });
 
     let formatFileCommand = vscode.commands.registerCommand('extension.rustFmtFile', (uri: vscode.Uri) => {
@@ -132,7 +155,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         const configPath = path.join(projectDir, 'rustfmt.toml');
-        openConfigFile(configPath);
+        openConfigFile(configPath, outputChannel);
     });
 
     let editClippyConfigCommand = vscode.commands.registerCommand('extension.editClippyConfig', () => {
@@ -147,7 +170,7 @@ export function activate(context: vscode.ExtensionContext) {
             return;
         }
         const configPath = path.join(projectDir, 'clippy.toml');
-        openConfigFile(configPath);
+        openConfigFile(configPath, outputChannel);
     });
 
     let fixCommand = vscode.commands.registerCommand('extension.rustFix', () => {
@@ -167,6 +190,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(formatCommand);
     context.subscriptions.push(lintCommand);
     context.subscriptions.push(testCommand);
+    context.subscriptions.push(checkCommand);
     context.subscriptions.push(formatFileCommand);
     context.subscriptions.push(lintFileCommand);
     context.subscriptions.push(editRustfmtConfigCommand);
@@ -187,10 +211,13 @@ export function activate(context: vscode.ExtensionContext) {
             if (config.get<boolean>('testOnSave')) {
                 runCargoCommand('cargo test', [], outputChannel, projectDir);
             }
+            if (config.get<boolean>('checkOnSave')) {
+                runCargoCommand('cargo check', [], outputChannel, projectDir);
+            }
         }
     });
 
-    // Add status bar items for format, lint, test, and fix commands
+    // Add status bar items for format, lint, test, fix, and check commands
     const statusBarFormatItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarFormatItem.command = 'extension.rustFmt';
     statusBarFormatItem.text = '$(check) Rust Format';
@@ -218,6 +245,13 @@ export function activate(context: vscode.ExtensionContext) {
     statusBarFixItem.tooltip = 'Run cargo fix';
     statusBarFixItem.show();
     context.subscriptions.push(statusBarFixItem);
+
+    const statusBarCheckItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
+    statusBarCheckItem.command = 'extension.rustCheck';
+    statusBarCheckItem.text = '$(checklist) Rust Check';
+    statusBarCheckItem.tooltip = 'Run cargo check';
+    statusBarCheckItem.show();
+    context.subscriptions.push(statusBarCheckItem);
 }
 
 export function deactivate() {
@@ -259,21 +293,26 @@ function mapSeverity(severity: string): vscode.DiagnosticSeverity {
     }
 }
 
-function displayDiagnostics(diagnostics: Map<string, vscode.Diagnostic[]>) {
+function displayDiagnostics(diagnostics: Map<string, vscode.Diagnostic[]>, outputChannel: vscode.OutputChannel) {
     const diagnosticCollection = vscode.languages.createDiagnosticCollection('rust');
     diagnosticCollection.clear();
 
     diagnostics.forEach((diagnostics, filePath) => {
         const fileUri = vscode.Uri.file(filePath);
         diagnosticCollection.set(fileUri, diagnostics);
+        outputChannel.appendLine(`Diagnostics for ${filePath}:`);
+        diagnostics.forEach(diagnostic => {
+            outputChannel.appendLine(`  Line ${diagnostic.range.start.line + 1}, Column ${diagnostic.range.start.character + 1}: ${diagnostic.message}`);
+        });
     });
 }
 
-function openConfigFile(configPath: string) {
+function openConfigFile(configPath: string, outputChannel: vscode.OutputChannel) {
     if (!fs.existsSync(configPath)) {
         fs.writeFileSync(configPath, '');
     }
     vscode.workspace.openTextDocument(configPath).then(doc => {
         vscode.window.showTextDocument(doc);
     });
+    outputChannel.appendLine(`Opened configuration file: ${configPath}`);
 }
