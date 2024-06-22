@@ -1172,7 +1172,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command:'rustcodepro.manageCargoFeatures',
+            command: 'rustcodepro.manageCargoFeatures',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -1239,17 +1239,28 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
+
+                const profileManagementCommands: vscode.QuickPickItem[] = [
+                    { label: 'Create New Profile', description: 'Create a new configuration profile' },
+                    { label: 'Edit Profile', description: 'Edit an existing configuration profile' },
+                    { label: 'Delete Profile', description: 'Delete an existing configuration profile' },
+                    { label: 'Switch Profile', description: 'Switch to a different configuration profile' },
+                    { label: '---', kind: vscode.QuickPickItemKind.Separator },
+                    { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
+                ];
         
                 const commandCategories: { [key: string]: vscode.QuickPickItem[] } = {
                     'Build Commands': buildCommands,
                     'Project Management': projectManagementCommands,
-                    'Diagnostics & Refactor': diagnosticsCommands
+                    'Diagnostics & Refactor': diagnosticsCommands,
+                    'Profile Management': profileManagementCommands
                 };
         
                 const items: vscode.QuickPickItem[] = [
                     { label: 'Build Commands', description: 'Commands related to building and running Rust code' },
                     { label: 'Project Management', description: 'Commands related to managing Rust projects' },
-                    { label: 'Diagnostics & Refactor', description: 'Commands related to diagnostics and refactoring' }
+                    { label: 'Diagnostics & Refactor', description: 'Commands related to diagnostics and refactoring' },
+                    { label: 'Profile Management', description: 'Commands related to managing configuration profiles' }
                 ];
         
                 let selectedItem = await vscode.window.showQuickPick(items, {
@@ -1338,6 +1349,18 @@ export function activate(context: vscode.ExtensionContext) {
                         case 'Manage Configuration Profiles':
                             vscode.commands.executeCommand('rustcodepro.manageProfiles');
                             break;
+                        case 'Create New Profile':
+                            vscode.commands.executeCommand('rustcodepro.createProfile');
+                            break;
+                        case 'Edit Profile':
+                            vscode.commands.executeCommand('rustcodepro.editProfile');
+                            break;
+                        case 'Delete Profile':
+                            vscode.commands.executeCommand('rustcodepro.deleteProfile');
+                            break;
+                        case 'Switch Profile':
+                            vscode.commands.executeCommand('rustcodepro.switchProfile');
+                            break;
                     }
         
                     return;
@@ -1370,6 +1393,18 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.manageProfiles',
             callback: manageProfiles
+        },
+        {
+            command: 'rustcodepro.createProfile',
+            callback: createProfile
+        },
+        {
+            command: 'rustcodepro.editProfile',
+            callback: editProfile
+        },
+        {
+            command: 'rustcodepro.deleteProfile',
+            callback: deleteProfile
         }
     ];
 
