@@ -1295,7 +1295,17 @@ export function activate(context: vscode.ExtensionContext) {
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'rustcodepro.showQuickPick';
     statusBarItem.text = '$(code) Rust Tools';
-    statusBarItem.tooltip = 'Access Rust tools and commands';
+    statusBarItem.backgroundColor = new vscode.ThemeColor('statusBarItem.warningBackground');
+    statusBarItem.tooltip = 'Rust Tools and Commands\n\n' +
+                        'Access a variety of tools and commands to assist with your Rust development.\n\n' +
+                        '- Format code\n' +
+                        '- Lint code\n' +
+                        '- Run tests\n' +
+                        '- Build projects\n' +
+                        '- Generate documentation\n' +
+                        '- Manage Rust toolchains\n' +
+                        '- Send code to Rust Playground\n' +
+                        'and much more!';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
