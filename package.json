@@ -167,7 +167,7 @@
     },
     "configuration": {
       "type": "object",
-      "title": "Rust Formatter and Linter Configuration",
+      "title": "Rust Code Pro Configuration",
       "properties": {
         "rustCodePro.realTimeLinting": {
           "type": "boolean",
