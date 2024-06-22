@@ -1291,8 +1291,8 @@ export function activate(context: vscode.ExtensionContext) {
 
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
     statusBarItem.command = 'rustcodepro.showQuickPick';
-    statusBarItem.text = '$(menu) Rust Actions';
-    statusBarItem.tooltip = 'Show Rust commands';
+    statusBarItem.text = '$(code) Rust Tools';
+    statusBarItem.tooltip = 'Access Rust tools and commands';
     statusBarItem.show();
     context.subscriptions.push(statusBarItem);
 }
