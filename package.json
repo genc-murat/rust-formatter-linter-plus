@@ -156,6 +156,15 @@
         "category": "Rust"
       }
     ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "rustcodepro.sendToPlayground",
+          "group": "navigation",
+          "when": "editorLangId == rust"
+        }
+      ]
+    },
     "configuration": {
       "type": "object",
       "title": "Rust Formatter and Linter Configuration",
