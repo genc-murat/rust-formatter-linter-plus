@@ -231,7 +231,7 @@ function openConfigFile(configPath: string, outputChannel: vscode.OutputChannel)
 function parseDiagnosticsOutput(output: string): RustError[] {
     const errors: RustError[] = [];
     const diagnostics = JSON.parse(output);
-    
+
     diagnostics.forEach((diag: any) => {
         const { code, message, range, severity } = diag;
         const filePath = diag.file;
@@ -285,7 +285,7 @@ function displayDiagnostics(diagnostics: RustError[], outputChannel: vscode.Outp
         outputChannel.appendLine(`Diagnostics for ${filePath}:`);
         diagnosticMap[filePath].forEach((diagnostic) => {
             outputChannel.appendLine(
-                  `Line ${diagnostic.range.start.line + 1}, Column ${
+                `Line ${diagnostic.range.start.line + 1}, Column ${
                     diagnostic.range.start.character + 1
                 }: ${diagnostic.message}`
             );
@@ -767,38 +767,154 @@ async function switchProfile() {
 async function sendToPlayground() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
-      vscode.window.showErrorMessage('No active editor found.');
-      return;
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
     }
-  
+
     const code = editor.document.getText();
     const playgroundUrl = 'https://play.rust-lang.org/';
-  
+
     try {
-      const axiosInstance: AxiosInstance = axios.create(); 
-  
-      const response = await axiosInstance.post(playgroundUrl + 'meta/gist', {
-        code: code,
-        edition: '2021' 
-      });
-  
-      const gistId = response.data.id;
-      const shareUrl = `${playgroundUrl}?gist=${gistId}`;
-      vscode.window.showInformationMessage(`Code shared on Rust Playground: ${shareUrl}`, 'Open').then(selection => {
-        if (selection === 'Open') {
-          vscode.env.openExternal(vscode.Uri.parse(shareUrl));
-        }
-      });
+        const axiosInstance: AxiosInstance = axios.create();
+
+        const response = await axiosInstance.post(playgroundUrl + 'meta/gist', {
+            code: code,
+            edition: '2021'
+        });
+
+        const gistId = response.data.id;
+        const shareUrl = `${playgroundUrl}?gist=${gistId}`;
+        vscode.window.showInformationMessage(`Code shared on Rust Playground: ${shareUrl}`, 'Open').then(selection => {
+            if (selection === 'Open') {
+                vscode.env.openExternal(vscode.Uri.parse(shareUrl));
+            }
+        });
     } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        vscode.window.showErrorMessage(`Failed to share code on Rust Playground: ${error.message}`);
-        outputChannel.appendLine(`Error stack: ${error.stack}`);
-      } else {
-        vscode.window.showErrorMessage('An unknown error occurred.');
-        outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
-      }
+        if (axios.isAxiosError(error)) {
+            vscode.window.showErrorMessage(`Failed to share code on Rust Playground: ${error.message}`);
+            outputChannel.appendLine(`Error stack: ${error.stack}`);
+        } else {
+            vscode.window.showErrorMessage('An unknown error occurred.');
+            outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
+        }
     }
-  }
+}
+
+async function manageProfiles() {
+    const config = vscode.workspace.getConfiguration('rustCodePro');
+    const profiles = config.get<{ [key: string]: any }>('profiles');
+    const profileNames = profiles ? Object.keys(profiles) : [];
+  
+    const options: vscode.QuickPickItem[] = [
+        { label: 'Create New Profile' },
+        ...profileNames.map((name) => ({ label: `Edit Profile: ${name}` })),
+        { label: 'Delete Profile' }
+    ];
+  
+    const selectedOption = await vscode.window.showQuickPick(options, {
+        placeHolder: 'Select a profile action'
+    });
+  
+    if (selectedOption) {
+        if (selectedOption.label === 'Create New Profile') {
+            await createProfile();
+        } else if (selectedOption.label === 'Delete Profile') {
+            await deleteProfile();
+        } else {
+            const profileName = selectedOption.label.replace('Edit Profile: ', '');
+            await editProfile(profileName);
+        }
+    }
+}
+  
+async function createProfile() {
+    const profileName = await vscode.window.showInputBox({
+        prompt: 'Enter the new profile name'
+    });
+  
+    if (profileName) {
+        const config = vscode.workspace.getConfiguration('rustCodePro');
+        const profiles = config.get<{ [key: string]: any }>('profiles') || {};
+  
+        if (profiles[profileName]) {
+            vscode.window.showErrorMessage(`Profile '${profileName}' already exists.`);
+            return;
+        }
+  
+        const newProfile = await configureProfile();
+  
+        profiles[profileName] = newProfile;
+        await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Profile '${profileName}' created.`);
+    }
+}
+  
+async function editProfile(profileName: string) {
+    const config = vscode.workspace.getConfiguration('rustCodePro');
+    const profiles = config.get<{ [key: string]: any }>('profiles') || {};
+  
+    if (!profiles[profileName]) {
+        vscode.window.showErrorMessage(`Profile '${profileName}' not found.`);
+        return;
+    }
+  
+    const updatedProfile = await configureProfile(profiles[profileName]);
+  
+    profiles[profileName] = updatedProfile;
+    await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
+    vscode.window.showInformationMessage(`Profile '${profileName}' updated.`);
+}
+  
+async function deleteProfile() {
+    const config = vscode.workspace.getConfiguration('rustCodePro');
+    const profiles = config.get<{ [key: string]: any }>('profiles') || {};
+    const profileNames = Object.keys(profiles);
+  
+    const profileToDelete = await vscode.window.showQuickPick(profileNames, {
+        placeHolder: 'Select a profile to delete'
+    });
+  
+    if (profileToDelete) {
+        delete profiles[profileToDelete];
+        await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
+        vscode.window.showInformationMessage(`Profile '${profileToDelete}' deleted.`);
+    }
+}
+  
+async function configureProfile(existingProfile?: { [key: string]: any }): Promise<{ [key: string]: any }> {
+    const profile = existingProfile || {};
+  
+    const configKeys = [
+        'enableClippyPedantic',
+        'autoClearOutput',
+        'realTimeLinting',
+        'formatOnSave',
+        'testOnSave',
+        'checkOnSave',
+        'buildOnSave',
+        'outputChannelName'
+    ];
+  
+    for (const key of configKeys) {
+        const currentValue = profile[key] !== undefined ? profile[key] : vscode.workspace.getConfiguration('rustCodePro').get(key);
+        const newValue = await vscode.window.showInputBox({
+            prompt: `Set value for ${key}`,
+            value: currentValue !== undefined ? currentValue.toString() : ''
+        });
+  
+        if (newValue !== undefined) {
+            if (typeof currentValue === 'boolean') {
+                profile[key] = newValue.toLowerCase() === 'true';
+            } else if (typeof currentValue === 'number') {
+                profile[key] = parseFloat(newValue);
+            } else {
+                profile[key] = newValue;
+            }
+        }
+    }
+  
+    return profile;
+}
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Code Pro is now active!');
@@ -1119,6 +1235,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
                     { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
                     { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
+                    { label: 'Manage Configuration Profiles', description: 'Create, edit, and delete configuration profiles' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
@@ -1218,6 +1335,9 @@ export function activate(context: vscode.ExtensionContext) {
                         case 'Send to Rust Playground':
                             vscode.commands.executeCommand('rustcodepro.sendToPlayground');
                             break;
+                        case 'Manage Configuration Profiles':
+                            vscode.commands.executeCommand('rustcodepro.manageProfiles');
+                            break;
                     }
         
                     return;
@@ -1246,6 +1366,10 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.sendToPlayground',
             callback: sendToPlayground
+        },
+        {
+            command: 'rustcodepro.manageProfiles',
+            callback: manageProfiles
         }
     ];
 

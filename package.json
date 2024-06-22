@@ -154,6 +154,21 @@
         "command": "rustcodepro.sendToPlayground",
         "title": "Send to Rust Playground",
         "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.switchProfile",
+        "title": "Switch Profile",
+        "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.createProfile",
+        "title": "Create Profile",
+        "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.editProfile",
+        "title": "Edit Profile",
+        "category": "Rust"
       }
     ],
     "menus": {
@@ -226,32 +241,13 @@
         },
         "rustCodePro.profiles": {
           "type": "object",
-          "default": {
-            "Strict Linting": {
-              "formatArgs": [
-                "--",
-                "check"
-              ],
-              "enableClippyPedantic": true,
-              "realTimeLinting": true,
-              "formatOnSave": true,
-              "testOnSave": true,
-              "checkOnSave": true,
-              "buildOnSave": false
-            },
-            "Fast Feedback": {
-              "formatArgs": [
-                "--"
-              ],
-              "enableClippyPedantic": false,
-              "realTimeLinting": false,
-              "formatOnSave": false,
-              "testOnSave": false,
-              "checkOnSave": true,
-              "buildOnSave": true
-            }
-          },
+          "default": {},
           "description": "Configuration profiles for different workflows."
+        },
+        "rustCodePro.activeProfile": {
+          "type": "string",
+          "default": "",
+          "description": "The currently active configuration profile."
         },
         "rustCodePro.diagnosticsCategories": {
           "type": "object",
