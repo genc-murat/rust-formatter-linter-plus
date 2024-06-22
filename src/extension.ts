@@ -804,86 +804,129 @@ async function manageProfiles() {
     const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles');
     const profileNames = profiles ? Object.keys(profiles) : [];
-  
+
     const options: vscode.QuickPickItem[] = [
         { label: 'Create New Profile' },
-        ...profileNames.map((name) => ({ label: `Edit Profile: ${name}` })),
+        { label: 'Edit Profile' },
         { label: 'Delete Profile' }
     ];
-  
+
     const selectedOption = await vscode.window.showQuickPick(options, {
         placeHolder: 'Select a profile action'
     });
-  
+
     if (selectedOption) {
         if (selectedOption.label === 'Create New Profile') {
             await createProfile();
         } else if (selectedOption.label === 'Delete Profile') {
             await deleteProfile();
-        } else {
-            const profileName = selectedOption.label.replace('Edit Profile: ', '');
-            await editProfile(profileName);
+        } else if (selectedOption.label === 'Edit Profile') {
+            await editProfile();
         }
     }
 }
-  
+
 async function createProfile() {
     const profileName = await vscode.window.showInputBox({
         prompt: 'Enter the new profile name'
     });
-  
+
     if (profileName) {
         const config = vscode.workspace.getConfiguration('rustCodePro');
         const profiles = config.get<{ [key: string]: any }>('profiles') || {};
-  
+
         if (profiles[profileName]) {
             vscode.window.showErrorMessage(`Profile '${profileName}' already exists.`);
             return;
         }
-  
+
         const newProfile = await configureProfile();
-  
+
         profiles[profileName] = newProfile;
         await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(`Profile '${profileName}' created.`);
     }
 }
-  
-async function editProfile(profileName: string) {
+
+async function editProfile() {
     const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles') || {};
-  
-    if (!profiles[profileName]) {
-        vscode.window.showErrorMessage(`Profile '${profileName}' not found.`);
+    const profileNames = Object.keys(profiles);
+
+    if (profileNames.length === 0) {
+        vscode.window.showErrorMessage('No profiles available to edit.');
         return;
     }
-  
-    const updatedProfile = await configureProfile(profiles[profileName]);
-  
-    profiles[profileName] = updatedProfile;
+
+    const selectedProfile = await vscode.window.showQuickPick(profileNames, {
+        placeHolder: 'Select a profile to edit'
+    });
+
+    if (!selectedProfile) {
+        vscode.window.showErrorMessage('Profile selection is required.');
+        return;
+    }
+
+    const confirm = await vscode.window.showQuickPick(['Yes', 'No'], {
+        placeHolder: `Are you sure you want to edit the profile '${selectedProfile}'?`
+    });
+
+    if (confirm !== 'Yes') {
+        vscode.window.showInformationMessage(`Profile '${selectedProfile}' was not edited.`);
+        return;
+    }
+
+    const updatedProfile = await configureProfile(profiles[selectedProfile]);
+
+    profiles[selectedProfile] = updatedProfile;
     await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
-    vscode.window.showInformationMessage(`Profile '${profileName}' updated.`);
+    vscode.window.showInformationMessage(`Profile '${selectedProfile}' updated.`);
 }
-  
+
+
 async function deleteProfile() {
     const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles') || {};
     const profileNames = Object.keys(profiles);
-  
+
+    if (profileNames.length === 0) {
+        vscode.window.showErrorMessage('No profiles available to delete.');
+        return;
+    }
+
+    if (profileNames.length === 1) {
+        vscode.window.showErrorMessage('Cannot delete the only profile available.');
+        return;
+    }
+
     const profileToDelete = await vscode.window.showQuickPick(profileNames, {
         placeHolder: 'Select a profile to delete'
     });
-  
-    if (profileToDelete) {
-        delete profiles[profileToDelete];
-        await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
-        vscode.window.showInformationMessage(`Profile '${profileToDelete}' deleted.`);
+
+    if (!profileToDelete) {
+        vscode.window.showErrorMessage('Profile selection is required.');
+        return;
     }
+
+    const confirm = await vscode.window.showQuickPick(['Yes', 'No'], {
+        placeHolder: `Are you sure you want to delete the profile '${profileToDelete}'?`
+    });
+
+    if (confirm !== 'Yes') {
+        vscode.window.showInformationMessage(`Profile '${profileToDelete}' was not deleted.`);
+        return;
+    }
+
+    delete profiles[profileToDelete];
+    await config.update('profiles', profiles, vscode.ConfigurationTarget.Global);
+    vscode.window.showInformationMessage(`Profile '${profileToDelete}' deleted.`);
 }
+
+
   
 async function configureProfile(existingProfile?: { [key: string]: any }): Promise<{ [key: string]: any }> {
     const profile = existingProfile || {};
-  
+
     const configKeys = [
         'enableClippyPedantic',
         'autoClearOutput',
@@ -894,14 +937,14 @@ async function configureProfile(existingProfile?: { [key: string]: any }): Promi
         'buildOnSave',
         'outputChannelName'
     ];
-  
+
     for (const key of configKeys) {
         const currentValue = profile[key] !== undefined ? profile[key] : vscode.workspace.getConfiguration('rustCodePro').get(key);
         const newValue = await vscode.window.showInputBox({
             prompt: `Set value for ${key}`,
             value: currentValue !== undefined ? currentValue.toString() : ''
         });
-  
+
         if (newValue !== undefined) {
             if (typeof currentValue === 'boolean') {
                 profile[key] = newValue.toLowerCase() === 'true';
@@ -912,9 +955,10 @@ async function configureProfile(existingProfile?: { [key: string]: any }): Promi
             }
         }
     }
-  
+
     return profile;
 }
+
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Code Pro is now active!');
