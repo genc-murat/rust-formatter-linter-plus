@@ -1086,35 +1086,35 @@ export function activate(context: vscode.ExtensionContext) {
             command: 'rustcodepro.showQuickPick',
             callback: async () => {
                 const buildCommands: vscode.QuickPickItem[] = [
-                    { label: '$(tools) Run cargo fmt', description: 'Format Rust code' },
-                    { label: '$(tools) Run cargo clippy', description: 'Lint Rust code' },
-                    { label: '$(tools) Run cargo test', description: 'Run Rust tests' },
-                    { label: '$(tools) Run cargo check', description: 'Check Rust code' },
-                    { label: '$(tools) Run cargo build', description: 'Build Rust code' },
-                    { label: '$(tools) Run cargo doc', description: 'Generate documentation for Rust code' },
-                    { label: '$(tools) Run cargo clean', description: 'Clean Rust project' },
-                    { label: '$(tools) Run cargo run', description: 'Run Rust code' },
-                    { label: '$(tools) Run cargo bench', description: 'Benchmark Rust code' },
-                    { label: '$(tools) Run cargo fix', description: 'Fix Rust code' },
-                    { label: '$(tools) Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
-                    { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
+                    { label: 'Run cargo fmt', description: 'Format Rust code' },
+                    { label: 'Run cargo clippy', description: 'Lint Rust code' },
+                    { label: 'Run cargo test', description: 'Run Rust tests' },
+                    { label: 'Run cargo check', description: 'Check Rust code' },
+                    { label: 'Run cargo build', description: 'Build Rust code' },
+                    { label: 'Run cargo doc', description: 'Generate documentation for Rust code' },
+                    { label: 'Run cargo clean', description: 'Clean Rust project' },
+                    { label: 'Run cargo run', description: 'Run Rust code' },
+                    { label: 'Run cargo bench', description: 'Benchmark Rust code' },
+                    { label: 'Run cargo fix', description: 'Fix Rust code' },
+                    { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
+                    { label: 'Go Back', description: 'Return to command categories' }
                 ];
         
                 const projectManagementCommands: vscode.QuickPickItem[] = [
-                    { label: '$(package) Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
-                    { label: '$(package) Update Rust Toolchains', description: 'Update all Rust toolchains' },
-                    { label: '$(package) Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
-                    { label: '$(package) Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
-                    { label: '$(package) Manage Cargo Features', description: 'Enable or disable specific Cargo features' },
-                    { label: '$(package) Send to Rust Playground', description: 'Send the current code to Rust Playground' },
-                    { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
+                    { label: 'Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
+                    { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
+                    { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
+                    { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
+                    { label: 'Manage Cargo Features', description: 'Enable or disable specific Cargo features' },
+                    { label: 'Send to Rust Playground', description: 'Send the current code to Rust Playground' },
+                    { label: 'Go Back', description: 'Return to command categories' }
                 ];
         
                 const diagnosticsCommands: vscode.QuickPickItem[] = [
-                    { label: '$(issue-opened) Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
-                    { label: '$(issue-reopened) Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
-                    { label: '$(issue-closed) Switch Configuration Profile', description: 'Switch between different configuration profiles' },
-                    { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
+                    { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
+                    { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
+                    { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
+                    { label: 'Go Back', description: 'Return to command categories' }
                 ];
         
                 const commandCategories: { [key: string]: vscode.QuickPickItem[] } = {
@@ -1124,9 +1124,9 @@ export function activate(context: vscode.ExtensionContext) {
                 };
         
                 const items: vscode.QuickPickItem[] = [
-                    { label: '$(tools) Build Commands', description: 'Commands related to building and running Rust code' },
-                    { label: '$(package) Project Management', description: 'Commands related to managing Rust projects' },
-                    { label: '$(issue-opened) Diagnostics & Refactor', description: 'Commands related to diagnostics and refactoring' }
+                    { label: 'Build Commands', description: 'Commands related to building and running Rust code' },
+                    { label: 'Project Management', description: 'Commands related to managing Rust projects' },
+                    { label: 'Diagnostics & Refactor', description: 'Commands related to diagnostics and refactoring' }
                 ];
         
                 let selectedItem = await vscode.window.showQuickPick(items, {
@@ -1134,7 +1134,7 @@ export function activate(context: vscode.ExtensionContext) {
                 });
         
                 while (selectedItem) {
-                    const commands = commandCategories[selectedItem.label.replace(/^\$\(\w+\)\s/, '')];
+                    const commands = commandCategories[selectedItem.label];
         
                     const selectedCommand = await vscode.window.showQuickPick(commands, {
                         placeHolder: 'Select a Rust command'
@@ -1144,7 +1144,7 @@ export function activate(context: vscode.ExtensionContext) {
                         return;
                     }
         
-                    if (selectedCommand.label === '$(arrow-left) Go Back') {
+                    if (selectedCommand.label === 'Go Back') {
                         selectedItem = await vscode.window.showQuickPick(items, {
                             placeHolder: 'Select a Rust command category'
                         });
@@ -1152,64 +1152,64 @@ export function activate(context: vscode.ExtensionContext) {
                     }
         
                     switch (selectedCommand.label) {
-                        case '$(tools) Run cargo fmt':
+                        case 'Run cargo fmt':
                             vscode.commands.executeCommand('rustcodepro.rustFmt');
                             break;
-                        case '$(tools) Run cargo clippy':
+                        case 'Run cargo clippy':
                             vscode.commands.executeCommand('rustcodepro.rustClippy');
                             break;
-                        case '$(tools) Run cargo test':
+                        case 'Run cargo test':
                             vscode.commands.executeCommand('rustcodepro.rustTest');
                             break;
-                        case '$(tools) Run cargo check':
+                        case 'Run cargo check':
                             vscode.commands.executeCommand('rustcodepro.rustCheck');
                             break;
-                        case '$(tools) Run cargo build':
+                        case 'Run cargo build':
                             vscode.commands.executeCommand('rustcodepro.rustBuild');
                             break;
-                        case '$(tools) Run cargo doc':
+                        case 'Run cargo doc':
                             vscode.commands.executeCommand('rustcodepro.rustDoc');
                             break;
-                        case '$(tools) Run cargo clean':
+                        case 'Run cargo clean':
                             vscode.commands.executeCommand('rustcodepro.rustClean');
                             break;
-                        case '$(tools) Run cargo run':
+                        case 'Run cargo run':
                             vscode.commands.executeCommand('rustcodepro.rustRun');
                             break;
-                        case '$(tools) Run cargo bench':
+                        case 'Run cargo bench':
                             vscode.commands.executeCommand('rustcodepro.rustBench');
                             break;
-                        case '$(tools) Run cargo fix':
+                        case 'Run cargo fix':
                             vscode.commands.executeCommand('rustcodepro.rustFix');
                             break;
-                        case '$(tools) Run rust-analyzer diagnostics':
+                        case 'Run rust-analyzer diagnostics':
                             vscode.commands.executeCommand('rustcodepro.rustAnalyzer');
                             break;
-                        case '$(issue-opened) Show Workspace Diagnostics Summary':
+                        case 'Show Workspace Diagnostics Summary':
                             vscode.commands.executeCommand('rustcodepro.workspaceDiagnosticsSummary');
                             break;
-                        case '$(package) Install Rust Toolchain':
+                        case 'Install Rust Toolchain':
                             vscode.commands.executeCommand('rustcodepro.installToolchain');
                             break;
-                        case '$(package) Update Rust Toolchains':
+                        case 'Update Rust Toolchains':
                             vscode.commands.executeCommand('rustcodepro.updateToolchain');
                             break;
-                        case '$(package) Switch Rust Toolchain':
+                        case 'Switch Rust Toolchain':
                             vscode.commands.executeCommand('rustcodepro.switchToolchain');
                             break;
-                        case '$(package) Run cargo-generate':
+                        case 'Run cargo-generate':
                             vscode.commands.executeCommand('rustcodepro.cargoGenerate');
                             break;
-                        case '$(issue-reopened) Run refactor suggestions':
+                        case 'Run refactor suggestions':
                             vscode.commands.executeCommand('rustcodepro.runRefactorSuggestions');
                             break;
-                        case '$(issue-closed) Switch Configuration Profile':
+                        case 'Switch Configuration Profile':
                             vscode.commands.executeCommand('rustcodepro.switchProfile');
                             break;
-                        case '$(package) Manage Cargo Features':
+                        case 'Manage Cargo Features':
                             vscode.commands.executeCommand('rustcodepro.manageCargoFeatures');
                             break;
-                        case '$(package) Send to Rust Playground':
+                        case 'Send to Rust Playground':
                             vscode.commands.executeCommand('rustcodepro.sendToPlayground');
                             break;
                     }
