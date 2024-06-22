@@ -1,8 +1,4 @@
-# Changelog
-
-All notable changes to this project will be documented in this file.
-
-## [0.9.0] - 2024-06-22
+## [0.10.0] - 2024-06-22
 
 ### Added
 - **Code Formatting**: Automatically format your Rust code using `cargo fmt`.
@@ -26,3 +22,9 @@ All notable changes to this project will be documented in this file.
 - **Diagnostics Categories**: Enable or disable specific categories in the diagnostics report.
 - **Performance Suggestions**: Identify and optimize performance issues.
 - **Common Pitfalls**: Detect and avoid common pitfalls in Rust code.
+- **Show Rust Commands**: Access a variety of tools and commands through a quick pick menu.
+- **Manage Cargo Features**: Enable or disable specific Cargo features.
+- **Send to Rust Playground**: Share your code directly on Rust Playground.
+- **Select Workspace Package**: Select and work with specific packages in a Cargo workspace.
+- **Open Configuration File**: Easily open and edit configuration files.
+- **Run Command with Options**: Customize and run various cargo commands with additional options.

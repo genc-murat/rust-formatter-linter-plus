@@ -102,19 +102,19 @@
 
 You can customize the extension settings by going to the VS Code settings (`Ctrl+,`) and searching for `RustCodePro`. The following settings are available:
 
-- `rustFormatterLinter.realTimeLinting`: Enable real-time linting feedback (default: `true`).
-- `rustFormatterLinter.formatOnSave`: Run `cargo fmt` on save (default: `true`).
-- `rustFormatterLinter.testOnSave`: Run `cargo test` on save (default: `false`).
-- `rustFormatterLinter.checkOnSave`: Run `cargo check` on save (default: `false`).
-- `rustFormatterLinter.buildOnSave`: Run `cargo build` on save (default: `false`).
-- `rustFormatterLinter.formatArgs`: Additional arguments for `cargo fmt`.
-- `rustFormatterLinter.lintArgs`: Additional arguments for `cargo clippy`.
-- `rustFormatterLinter.outputChannelName`: Name of the output channel (default: `Rust Formatter and Linter Plus`).
-- `rustFormatterLinter.autoClearOutput`: Automatically clear the output channel before each command (default: `false`).
-- `rustFormatterLinter.diagnosticsCommand`: Command to use for workspace diagnostics (`cargo check` or `cargo clippy`) (default: `cargo check`).
-- `rustFormatterLinter.enableClippyPedantic`: Enable Clippy pedantic lints for stricter code checks (default: `false`).
-- `rustFormatterLinter.profiles`: Configuration profiles for different workflows.
-- `rustFormatterLinter.diagnosticsCategories`: Enable/disable specific categories in the diagnostics report.
+- `rustCodePro.realTimeLinting`: Enable real-time linting feedback (default: `true`).
+- `rustCodePro.formatOnSave`: Run `cargo fmt` on save (default: `true`).
+- `rustCodePro.testOnSave`: Run `cargo test` on save (default: `false`).
+- `rustCodePro.checkOnSave`: Run `cargo check` on save (default: `false`).
+- `rustCodePro.buildOnSave`: Run `cargo build` on save (default: `false`).
+- `rustCodePro.formatArgs`: Additional arguments for `cargo fmt`.
+- `rustCodePro.lintArgs`: Additional arguments for `cargo clippy`.
+- `rustCodePro.outputChannelName`: Name of the output channel (default: `Rust Code Pro`).
+- `rustCodePro.autoClearOutput`: Automatically clear the output channel before each command (default: `false`).
+- `rustCodePro.diagnosticsCommand`: Command to use for workspace diagnostics (`cargo check` or `cargo clippy`) (default: `cargo check`).
+- `rustCodePro.enableClippyPedantic`: Enable Clippy pedantic lints for stricter code checks (default: `false`).
+- `rustCodePro.profiles`: Configuration profiles for different workflows.
+- `rustCodePro.diagnosticsCategories`: Enable/disable specific categories in the diagnostics report.
 
 ### Status Bar Integration
 
