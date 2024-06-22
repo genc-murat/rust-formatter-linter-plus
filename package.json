@@ -241,12 +241,23 @@
         },
         "rustCodePro.profiles": {
           "type": "object",
-          "default": {},
+          "default": {
+            "default": {
+              "enableClippyPedantic": false,
+              "autoClearOutput": true,
+              "realTimeLinting": true,
+              "formatOnSave": true,
+              "testOnSave": false,
+              "checkOnSave": false,
+              "buildOnSave": false,
+              "outputChannelName": "Rust Code Pro"
+            }
+          },
           "description": "Configuration profiles for different workflows."
         },
         "rustCodePro.activeProfile": {
           "type": "string",
-          "default": "",
+          "default": "default",
           "description": "The currently active configuration profile."
         },
         "rustCodePro.diagnosticsCategories": {
