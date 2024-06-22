@@ -616,7 +616,119 @@ async function runRefactorSuggestions() {
         vscode.window.showErrorMessage('Cargo.toml not found in the project.');
         return;
     }
-    runCommand('cargo', ['fix', '--allow-dirty', '--allow-staged'], outputChannel, projectDir, 'cargo');
+
+    const output = await new Promise<string>((resolve) => {
+        const outputData: string[] = [];
+        runCommandRefactor('cargo', ['fix', '--allow-dirty', '--allow-staged', '--message-format=json'], projectDir, (success, data) => {
+            outputData.push(data);
+            resolve(outputData.join('\n'));
+        });
+    });
+
+    const changes = parseCargoOutput(output);
+    showRefactorSuggestionsInWebview(changes);
+}
+
+function runCommandRefactor(
+    command: string,
+    args: string[],
+    cwd: string,
+    onDone: (success: boolean, data: string) => void
+) {
+    const proc = cp.spawn(command, args, { shell: true, cwd: cwd });
+    let output = '';
+
+    proc.stdout.on('data', (data) => {
+        output += data.toString();
+    });
+
+    proc.stderr.on('data', (data) => {
+        output += data.toString();
+    });
+
+    proc.on('close', (code) => {
+        onDone(code === 0, output);
+    });
+
+    proc.on('error', (err) => {
+        vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
+    });
+}
+
+function showRefactorSuggestionsInWebview(changes: RustError[]) {
+    const panel = vscode.window.createWebviewPanel(
+        'rustRefactorSuggestions',
+        'Rust Refactor Suggestions',
+        vscode.ViewColumn.One,
+        {
+            enableScripts: true
+        }
+    );
+
+    const changesHtml = changes.map(change => `
+        <li>
+            <strong>${change.filePath}:${change.line + 1}:${change.column + 1}</strong><br>
+            ${change.message}
+        </li>`).join('');
+
+    panel.webview.html = `
+        <html>
+        <head>
+            <style>
+                body {
+                    font-family: Arial, sans-serif;
+                }
+                ul {
+                    list-style-type: none;
+                    padding: 0;
+                }
+                li {
+                    background: #008DDA;
+                    margin: 5px 0;
+                    padding: 10px;
+                    border-radius: 5px;
+                    color: #F7EEDD
+                }
+                strong {
+                    color: #ACE2E1;
+                }
+            </style>
+        </head>
+        <body>
+            <h1>Refactor Suggestions</h1>
+            <ul>
+                ${changesHtml}
+            </ul>
+        </body>
+        </html>`;
+}
+
+function parseCargoOutput(output: string): RustError[] {
+    const errors: RustError[] = [];
+    const lines = output.split('\n');
+
+    lines.forEach(line => {
+        try {
+            const parsedLine = JSON.parse(line);
+            if (parsedLine.reason === 'compiler-message' && parsedLine.message && parsedLine.message.spans.length > 0) {
+                const primarySpan = parsedLine.message.spans.find((span: any) => span.is_primary);
+                if (primarySpan) {
+                    const rustError: RustError = {
+                        filePath: primarySpan.file_name,
+                        line: primarySpan.line_start - 1,
+                        column: primarySpan.column_start - 1,
+                        severity: parsedLine.message.level,
+                        message: parsedLine.message.rendered || parsedLine.message.message
+                    };
+                    errors.push(rustError);
+                }
+            }
+        } catch (e) {
+            // Skip lines that cannot be parsed
+        }
+    });
+
+    return errors;
 }
 
 function loadProfile(profileName: string) {
