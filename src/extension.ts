@@ -1097,6 +1097,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
+                    { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
         
@@ -1107,6 +1108,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
                     { label: 'Manage Cargo Features', description: 'Enable or disable specific Cargo features' },
                     { label: 'Send to Rust Playground', description: 'Send the current code to Rust Playground' },
+                    { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
         
@@ -1114,6 +1116,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
                     { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
                     { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
+                    { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
         
