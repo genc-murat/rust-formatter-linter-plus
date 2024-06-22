@@ -45,7 +45,7 @@ async function runCommand(
     onDone?: (success: boolean) => void
 ) {
     createCommandStatusBarItem();
-    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const config = vscode.workspace.getConfiguration('rustCodePro');
     const enableClippyPedantic = config.get<boolean>('enableClippyPedantic') || false;
 
     if (config.get<boolean>('autoClearOutput')) {
@@ -527,7 +527,7 @@ async function switchToolchain() {
 
 function createOutputChannel() {
     if (!outputChannel) {
-        outputChannel = vscode.window.createOutputChannel('Rust Formatter and Linter Plus');
+        outputChannel = vscode.window.createOutputChannel('Rust Code Pro');
     }
     outputChannel.show(true);
 }
@@ -620,7 +620,7 @@ async function runRefactorSuggestions() {
 }
 
 function loadProfile(profileName: string) {
-    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles');
     const profile = profiles ? profiles[profileName] : null;
 
@@ -635,7 +635,7 @@ function loadProfile(profileName: string) {
 }
 
 async function switchProfile() {
-    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+    const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles');
 
     if (!profiles) {
@@ -654,10 +654,10 @@ async function switchProfile() {
 }
 
 export function activate(context: vscode.ExtensionContext) {
-    console.log('Rust Formatter and Linter Plus is now active!');
+    console.log('Rust Code Pro is now active!');
 
-    const config = vscode.workspace.getConfiguration('rustFormatterLinter');
-    const outputChannelName = config.get<string>('outputChannelName') || 'Rust Formatter and Linter Plus';
+    const config = vscode.workspace.getConfiguration('rustCodePro');
+    const outputChannelName = config.get<string>('outputChannelName') || 'Rust Code Pro';
     outputChannel = vscode.window.createOutputChannel(outputChannelName);
     outputChannel.show(true);
 
@@ -665,7 +665,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     const commands = [
         {
-            command: 'extension.rustFmt',
+            command: 'rustcodepro.rustFmt',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -682,7 +682,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustClippy',
+            command: 'rustcodepro.rustClippy',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -699,7 +699,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustTest',
+            command: 'rustcodepro.rustTest',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -716,7 +716,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustCheck',
+            command: 'rustcodepro.rustCheck',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -732,7 +732,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustBuild',
+            command: 'rustcodepro.rustBuild',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -749,7 +749,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustDoc',
+            command: 'rustcodepro.rustDoc',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -765,7 +765,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustClean',
+            command: 'rustcodepro.rustClean',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -781,7 +781,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustRun',
+            command: 'rustcodepro.rustRun',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -798,7 +798,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustBench',
+            command: 'rustcodepro.rustBench',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -815,7 +815,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustFmtFile',
+            command: 'rustcodepro.rustFmtFile',
             callback: async (uri: vscode.Uri) => {
                 const projectDir = findCargoTomlDir(uri.fsPath);
                 if (!projectDir) {
@@ -826,7 +826,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustClippyFile',
+            command: 'rustcodepro.rustClippyFile',
             callback: async (uri: vscode.Uri) => {
                 const projectDir = findCargoTomlDir(uri.fsPath);
                 if (!projectDir) {
@@ -837,7 +837,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.editRustfmtConfig',
+            command: 'rustcodepro.editRustfmtConfig',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -854,7 +854,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.editClippyConfig',
+            command: 'rustcodepro.editClippyConfig',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -871,7 +871,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustFix',
+            command: 'rustcodepro.rustFix',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
@@ -887,7 +887,7 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.rustAnalyzer',
+            command: 'rustcodepro.rustAnalyzer',
             callback: async () => {
                 if (!checkRustAnalyzerInstalled()) {
                     vscode.window.showErrorMessage(
@@ -909,19 +909,37 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
-            command: 'extension.installToolchain',
+            command:'rustcodepro.manageCargoFeatures',
+            callback: async () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+            
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+            
+                await selectCargoFeatures(projectDir);
+            }
+        },
+        {
+            command: 'rustcodepro.installToolchain',
             callback: installToolchain
         },
         {
-            command: 'extension.updateToolchain',
+            command: 'rustcodepro.updateToolchain',
             callback: updateToolchain
         },
         {
-            command: 'extension.switchToolchain',
+            command: 'rustcodepro.switchToolchain',
             callback: switchToolchain
         },
         {
-            command: 'extension.showQuickPick',
+            command: 'rustcodepro.showQuickPick',
             callback: async () => {
                 const items: vscode.QuickPickItem[] = [
                     { label: 'Run cargo fmt', description: 'Format Rust code' },
@@ -941,7 +959,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Switch Rust Toolchain', description: 'Switch to a specific Rust toolchain' },
                     { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
                     { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
-                    { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' }
+                    { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
+                    { label: 'Manage Cargo Features', description: 'Enable or disable specific Cargo features' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -954,79 +973,82 @@ export function activate(context: vscode.ExtensionContext) {
 
                 switch (selectedItem.label) {
                     case 'Run cargo fmt':
-                        vscode.commands.executeCommand('extension.rustFmt');
+                        vscode.commands.executeCommand('rustcodepro.rustFmt');
                         break;
                     case 'Run cargo clippy':
-                        vscode.commands.executeCommand('extension.rustClippy');
+                        vscode.commands.executeCommand('rustcodepro.rustClippy');
                         break;
                     case 'Run cargo test':
-                        vscode.commands.executeCommand('extension.rustTest');
+                        vscode.commands.executeCommand('rustcodepro.rustTest');
                         break;
                     case 'Run cargo check':
-                        vscode.commands.executeCommand('extension.rustCheck');
+                        vscode.commands.executeCommand('rustcodepro.rustCheck');
                         break;
                     case 'Run cargo build':
-                        vscode.commands.executeCommand('extension.rustBuild');
+                        vscode.commands.executeCommand('rustcodepro.rustBuild');
                         break;
                     case 'Run cargo doc':
-                        vscode.commands.executeCommand('extension.rustDoc');
+                        vscode.commands.executeCommand('rustcodepro.rustDoc');
                         break;
                     case 'Run cargo clean':
-                        vscode.commands.executeCommand('extension.rustClean');
+                        vscode.commands.executeCommand('rustcodepro.rustClean');
                         break;
                     case 'Run cargo run':
-                        vscode.commands.executeCommand('extension.rustRun');
+                        vscode.commands.executeCommand('rustcodepro.rustRun');
                         break;
                     case 'Run cargo bench':
-                        vscode.commands.executeCommand('extension.rustBench');
+                        vscode.commands.executeCommand('rustcodepro.rustBench');
                         break;
                     case 'Run cargo fix':
-                        vscode.commands.executeCommand('extension.rustFix');
+                        vscode.commands.executeCommand('rustcodepro.rustFix');
                         break;
                     case 'Run rust-analyzer diagnostics':
-                        vscode.commands.executeCommand('extension.rustAnalyzer');
+                        vscode.commands.executeCommand('rustcodepro.rustAnalyzer');
                         break;
                     case 'Show Workspace Diagnostics Summary':
-                        vscode.commands.executeCommand('extension.workspaceDiagnosticsSummary');
+                        vscode.commands.executeCommand('rustcodepro.workspaceDiagnosticsSummary');
                         break;
                     case 'Install Rust Toolchain':
-                        vscode.commands.executeCommand('extension.installToolchain');
+                        vscode.commands.executeCommand('rustcodepro.installToolchain');
                         break;
                     case 'Update Rust Toolchains':
-                        vscode.commands.executeCommand('extension.updateToolchain');
+                        vscode.commands.executeCommand('rustcodepro.updateToolchain');
                         break;
                     case 'Switch Rust Toolchain':
-                        vscode.commands.executeCommand('extension.switchToolchain');
+                        vscode.commands.executeCommand('rustcodepro.switchToolchain');
                         break;
                     case 'Run cargo-generate':
-                        vscode.commands.executeCommand('extension.cargoGenerate');
+                        vscode.commands.executeCommand('rustcodepro.cargoGenerate');
                         break;
                     case 'Run refactor suggestions':
-                        vscode.commands.executeCommand('extension.runRefactorSuggestions');
+                        vscode.commands.executeCommand('rustcodepro.runRefactorSuggestions');
                         break;
                     case 'Switch Configuration Profile':
-                        vscode.commands.executeCommand('extension.switchProfile');
+                        vscode.commands.executeCommand('rustcodepro.switchProfile');
+                        break;
+                    case 'Manage Cargo Features':
+                        vscode.commands.executeCommand('rustcodepro.manageCargoFeatures');
                         break;
                 }
             }
         },
         {
-            command: 'extension.workspaceDiagnosticsSummary',
+            command: 'rustcodepro.workspaceDiagnosticsSummary',
             callback: async () => {
                 const command = config.get<string>('diagnosticsCommand') || 'cargo check';
                 await runWorkspaceDiagnostics(command);
             }
         },
         {
-            command: 'extension.cargoGenerate',
+            command: 'rustcodepro.cargoGenerate',
             callback: runCargoGenerate
         },
         {
-            command: 'extension.runRefactorSuggestions',
+            command: 'rustcodepro.runRefactorSuggestions',
             callback: runRefactorSuggestions
         },
         {
-            command: 'extension.switchProfile',
+            command: 'rustcodepro.switchProfile',
             callback: switchProfile
         }
     ];
@@ -1037,7 +1059,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     vscode.workspace.onDidChangeTextDocument((event) => {
-        const config = vscode.workspace.getConfiguration('rustFormatterLinter');
+        const config = vscode.workspace.getConfiguration('rustCodePro');
         if (config.get<boolean>('realTimeLinting')) {
             const editor = vscode.window.activeTextEditor;
             if (editor && editor.document.languageId === 'rust') {
@@ -1075,7 +1097,7 @@ export function activate(context: vscode.ExtensionContext) {
     });
 
     const statusBarItem = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Left, 100);
-    statusBarItem.command = 'extension.showQuickPick';
+    statusBarItem.command = 'rustcodepro.showQuickPick';
     statusBarItem.text = '$(menu) Rust Actions';
     statusBarItem.tooltip = 'Show Rust commands';
     statusBarItem.show();
@@ -1088,6 +1110,53 @@ function runTerminalCommand(command: string, args: string[], terminal: vscode.Te
     terminal.show();
 }
 
+function getCargoFeatures(cargoTomlPath: string): string[] {
+    if (!fs.existsSync(cargoTomlPath)) {
+        return [];
+    }
+
+    const content = fs.readFileSync(cargoTomlPath, 'utf8');
+    const cargoToml = toml.parse(content);
+
+    if (cargoToml.features) {
+        return Object.keys(cargoToml.features);
+    }
+
+    return [];
+}
+
+async function selectCargoFeatures(projectDir: string) {
+    const cargoTomlPath = path.join(projectDir, 'Cargo.toml');
+    const features = getCargoFeatures(cargoTomlPath);
+
+    if (features.length === 0) {
+        vscode.window.showInformationMessage('No features found in Cargo.toml');
+        return;
+    }
+
+    const selectedFeatures = await vscode.window.showQuickPick(features, {
+        placeHolder: 'Select features to enable',
+        canPickMany: true
+    });
+
+    if (selectedFeatures) {
+        enableCargoFeatures(projectDir, selectedFeatures);
+    }
+}
+
+function enableCargoFeatures(projectDir: string, features: string[]) {
+    const args = ['build', '--features', features.join(',')];
+
+    runCommand('cargo', args, outputChannel, projectDir, 'cargo', (success) => {
+        if (success) {
+            vscode.window.showInformationMessage(`Enabled features: ${features.join(', ')}`);
+        } else {
+            vscode.window.showErrorMessage('Failed to enable features');
+        }
+    });
+}
+
+
 export function deactivate() {
-    console.log('Rust Formatter and Linter Plus is now deactivated!');
+    console.log('Rust Code Pro is now deactivated!');
 }
