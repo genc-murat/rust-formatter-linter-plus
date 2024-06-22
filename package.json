@@ -34,6 +34,7 @@
     "onCommand:rustcodepro.switchToolchain",
     "onCommand:rustcodepro.cargoGenerate",
     "onCommand:rustcodepro.manageCargoFeatures",
+    "onCommand:rustcodepro.sendToPlayground",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -148,6 +149,11 @@
         "command": "rustcodepro.manageCargoFeatures",
         "title": "Manage Cargo Features",
         "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.sendToPlayground",
+        "title": "Send to Rust Playground",
+        "category": "Rust"
       }
     ],
     "configuration": {
@@ -213,7 +219,10 @@
           "type": "object",
           "default": {
             "Strict Linting": {
-              "formatArgs": ["--", "check"],
+              "formatArgs": [
+                "--",
+                "check"
+              ],
               "enableClippyPedantic": true,
               "realTimeLinting": true,
               "formatOnSave": true,
@@ -222,7 +231,9 @@
               "buildOnSave": false
             },
             "Fast Feedback": {
-              "formatArgs": ["--"],
+              "formatArgs": [
+                "--"
+              ],
               "enableClippyPedantic": false,
               "realTimeLinting": false,
               "formatOnSave": false,
@@ -270,6 +281,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
+    "axios": "^1.7.2",
     "toml": "^3.0.0"
   }
 }

@@ -3,6 +3,7 @@ import * as cp from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as toml from 'toml';
+import axios, { AxiosInstance } from 'axios';
 
 interface RustError {
     filePath: string;
@@ -501,8 +502,6 @@ function parseClippyOutput(output: string): RustError[] {
     return errors;
 }
 
-
-
 async function installToolchain() {
     const toolchain = await vscode.window.showInputBox({
         prompt: 'Enter the toolchain to install (e.g., stable, nightly, 1.53.0)'
@@ -764,6 +763,41 @@ async function switchProfile() {
         loadProfile(selectedProfile);
     }
 }
+
+async function sendToPlayground() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('No active editor found.');
+      return;
+    }
+  
+    const code = editor.document.getText();
+    const playgroundUrl = 'https://play.rust-lang.org/';
+  
+    try {
+      // Create an Axios instance
+      const axiosInstance: AxiosInstance = axios.create(); 
+  
+      const response = await axiosInstance.post(playgroundUrl + 'meta/gist', {
+        code: code,
+        edition: '2021' 
+      });
+  
+      const gistId = response.data.id;
+      const shareUrl = `${playgroundUrl}?gist=${gistId}`;
+      vscode.window.showInformationMessage(`Code shared on Rust Playground: ${shareUrl}`, 'Open').then(selection => {
+        if (selection === 'Open') {
+          vscode.env.openExternal(vscode.Uri.parse(shareUrl));
+        }
+      });
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error)) {
+        vscode.window.showErrorMessage(`Failed to share code on Rust Playground: ${error.message}`);
+      } else {
+        vscode.window.showErrorMessage('An unknown error occurred.');
+      }
+    }
+  }
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Code Pro is now active!');
@@ -1072,7 +1106,8 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo-generate', description: 'Run cargo-generate to scaffold new projects' },
                     { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
                     { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
-                    { label: 'Manage Cargo Features', description: 'Enable or disable specific Cargo features' }
+                    { label: 'Manage Cargo Features', description: 'Enable or disable specific Cargo features' },
+                    { label: 'Send to Rust Playground', description: 'Send the current code to Rust Playground' }
                 ];
 
                 const selectedItem = await vscode.window.showQuickPick(items, {
@@ -1141,6 +1176,9 @@ export function activate(context: vscode.ExtensionContext) {
                     case 'Manage Cargo Features':
                         vscode.commands.executeCommand('rustcodepro.manageCargoFeatures');
                         break;
+                    case 'Send to Rust Playground':
+                        vscode.commands.executeCommand('rustcodepro.sendToPlayground');
+                        break;
                 }
             }
         },
@@ -1162,6 +1200,10 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.switchProfile',
             callback: switchProfile
+        },
+        {
+            command: 'rustcodepro.sendToPlayground',
+            callback: sendToPlayground
         }
     ];
 
@@ -1267,7 +1309,6 @@ function enableCargoFeatures(projectDir: string, features: string[]) {
         }
     });
 }
-
 
 export function deactivate() {
     console.log('Rust Code Pro is now deactivated!');
