@@ -69,13 +69,15 @@ async function runCommand(
 
     proc.on('close', (code) => {
         if (code !== 0) {
-            vscode.window.showErrorMessage(`${command} failed with exit code ${code}`);
-            updateCommandStatusBarItem(`${command} failed`, `Exit code: ${code}`, false);
-            outputChannel.appendLine(`[${timestamp}] ${command} failed with exit code ${code}`);
+            const message = `${command} failed with exit code ${code}`;
+            vscode.window.showErrorMessage(message);
+            updateCommandStatusBarItem(message, `Exit code: ${code}`, false);
+            outputChannel.appendLine(`[${timestamp}] ${message}`);
         } else {
-            vscode.window.showInformationMessage(`${command} completed successfully.`);
-            updateCommandStatusBarItem(`${command} completed`, `Successfully completed ${command}`, true);
-            outputChannel.appendLine(`[${timestamp}] ${command} completed successfully.`);
+            const message = `${command} completed successfully.`;
+            vscode.window.showInformationMessage(message);
+            updateCommandStatusBarItem(message, `Successfully completed ${command}`, true);
+            outputChannel.appendLine(`[${timestamp}] ${message}`);
         }
         if (onDone) {
             onDone(code === 0);
@@ -83,9 +85,11 @@ async function runCommand(
     });
 
     proc.on('error', (err) => {
-        vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
+        const message = `Failed to start process: ${err.message}`;
+        vscode.window.showErrorMessage(message);
         updateCommandStatusBarItem(`Failed to start ${command}`, err.message, false);
-        outputChannel.appendLine(`[${timestamp}] Failed to start process: ${err.message}`);
+        outputChannel.appendLine(`[${timestamp}] ${message}`);
+        outputChannel.appendLine(`[${timestamp}] Error stack: ${err.stack}`);
     });
 }
 
@@ -438,6 +442,7 @@ async function runWorkspaceDiagnostics(command: string) {
                     cp.exec(`cargo ${args.join(' ')}`, { cwd: packageDir }, (error, stdout, stderr) => {
                         if (error) {
                             vscode.window.showErrorMessage(`cargo clippy failed`);
+                            outputChannel.appendLine(`Error stack: ${error.stack}`);
                         } else {
                             const errors = parseClippyOutput(stdout);
                             allDiagnostics.push(...errors);
@@ -486,7 +491,8 @@ function parseClippyOutput(output: string): RustError[] {
                 }
             }
         } catch (e) {
-            // Skip lines that cannot be parsed
+            outputChannel.appendLine(`Error parsing line: ${line}`);
+            outputChannel.appendLine(`Exception: ${e}`);
         }
     });
 
@@ -537,6 +543,7 @@ async function runRustupCommand(command: string, args: string[], successMessage:
     } catch (error) {
         if (error instanceof Error) {
             outputChannel.appendLine(`Error: ${error.message}`);
+            outputChannel.appendLine(`Error stack: ${error.stack}`);
             vscode.window.showErrorMessage(`Error: ${error.message}`);
         } else {
             outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
@@ -642,6 +649,7 @@ function runCommandRefactor(
 
     proc.on('error', (err) => {
         vscode.window.showErrorMessage(`Failed to start process: ${err.message}`);
+        outputChannel.appendLine(`[${new Date().toLocaleString()}] Error stack: ${err.stack}`);
     });
 }
 
@@ -714,7 +722,8 @@ function parseCargoOutput(output: string): RustError[] {
                 }
             }
         } catch (e) {
-            // Skip lines that cannot be parsed
+            outputChannel.appendLine(`Error parsing line: ${line}`);
+            outputChannel.appendLine(`Exception: ${e}`);
         }
     });
 
@@ -766,7 +775,6 @@ async function sendToPlayground() {
     const playgroundUrl = 'https://play.rust-lang.org/';
   
     try {
-      // Create an Axios instance
       const axiosInstance: AxiosInstance = axios.create(); 
   
       const response = await axiosInstance.post(playgroundUrl + 'meta/gist', {
@@ -784,8 +792,10 @@ async function sendToPlayground() {
     } catch (error: unknown) {
       if (axios.isAxiosError(error)) {
         vscode.window.showErrorMessage(`Failed to share code on Rust Playground: ${error.message}`);
+        outputChannel.appendLine(`Error stack: ${error.stack}`);
       } else {
         vscode.window.showErrorMessage('An unknown error occurred.');
+        outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
       }
     }
   }
