@@ -4,14 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as toml from 'toml';
 import axios, { AxiosInstance } from 'axios';
-
-interface RustError {
-    filePath: string;
-    line: number;
-    column: number;
-    severity: string;
-    message: string;
-}
+import { RustError } from './types';
 
 let commandStatusBarItem: vscode.StatusBarItem;
 let outputChannel: vscode.OutputChannel;
