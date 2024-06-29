@@ -1013,13 +1013,13 @@ async function expandMacro() {
         cp.execSync('cargo expand --version', { stdio: 'ignore' });
     } catch (error) {
         const installExpand = await vscode.window.showWarningMessage(
-            'cargo expand is not installed. Do you want to install it?',
+            'cargo expand is not installed. Do you want to install it using `cargo install cargo-expand`?',
             'Yes',
             'No'
         );
         if (installExpand === 'Yes') {
             try {
-                cp.execSync('cargo install cargo-expand', { stdio: 'inherit' });
+                await execPromise('cargo install cargo-expand');
                 vscode.window.showInformationMessage('cargo expand installed successfully.');
             } catch (installError) {
                 if (installError instanceof Error) {
@@ -1074,6 +1074,7 @@ async function expandMacro() {
         }
     }
 }
+
 
 function execPromiseExpand(command: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
     return new Promise((resolve, reject) => {
