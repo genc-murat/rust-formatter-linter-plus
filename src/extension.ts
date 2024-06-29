@@ -1355,10 +1355,26 @@ export function activate(context: vscode.ExtensionContext) {
             command: 'rustcodepro.rustAnalyzer',
             callback: async () => {
                 if (!checkRustAnalyzerInstalled()) {
-                    vscode.window.showErrorMessage(
-                        'rust-analyzer is not installed. Please install it from https://rust-analyzer.github.io/manual.html#rust-analyzer-language-server-binary'
+                    const installRustAnalyzer = await vscode.window.showWarningMessage(
+                        'rust-analyzer is not installed. Do you want to install it using `rustup component add rust-analyzer`?',
+                        'Yes',
+                        'No'
                     );
-                    return;
+                    if (installRustAnalyzer === 'Yes') {
+                        try {
+                            await execPromise('rustup component add rust-analyzer');
+                            vscode.window.showInformationMessage('rust-analyzer installed successfully.');
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                vscode.window.showErrorMessage(`Failed to install rust-analyzer: ${error.message}`);
+                            } else {
+                                vscode.window.showErrorMessage('Failed to install rust-analyzer: Unknown error occurred.');
+                            }
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
                 }
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
