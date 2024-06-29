@@ -157,6 +157,15 @@ function checkRustAnalyzerInstalled(): boolean {
     }
 }
 
+function checkCargoNextestInstalled(): boolean {
+    try {
+        cp.execSync('cargo nextest --version', { stdio: 'ignore' });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function showAdditionalOptions(command: string): Promise<string[]> {
     const options = [];
     if (command === 'cargo build') {
@@ -213,6 +222,18 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
         });
         if (clippyOptions === 'Fix') {
             options.push('--fix');
+        }
+    } else if (command === 'cargo nextest') {
+        const nextestOptions = await vscode.window.showQuickPick(['All Tests', 'Specific Test'], {
+            placeHolder: 'Select test type'
+        });
+        if (nextestOptions === 'Specific Test') {
+            const testName = await vscode.window.showInputBox({
+                prompt: 'Enter the test name'
+            });
+            if (testName) {
+                options.push(`--test ${testName}`);
+            }
         }
     }
     return options;
@@ -923,7 +944,6 @@ async function deleteProfile() {
 }
 
 
-  
 async function configureProfile(existingProfile?: { [key: string]: any }): Promise<{ [key: string]: any }> {
     const profile = existingProfile || {};
 
@@ -1252,6 +1272,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo fmt', description: 'Format Rust code' },
                     { label: 'Run cargo clippy', description: 'Lint Rust code' },
                     { label: 'Run cargo test', description: 'Run Rust tests' },
+                    { label: 'Run cargo nextest', description: 'Run nextest for Rust code' },
                     { label: 'Run cargo check', description: 'Check Rust code' },
                     { label: 'Run cargo build', description: 'Build Rust code' },
                     { label: 'Run cargo doc', description: 'Generate documentation for Rust code' },
@@ -1338,6 +1359,9 @@ export function activate(context: vscode.ExtensionContext) {
                             break;
                         case 'Run cargo test':
                             vscode.commands.executeCommand('rustcodepro.rustTest');
+                            break;
+                        case 'Run cargo nextest':
+                            vscode.commands.executeCommand('rustcodepro.nextest');
                             break;
                         case 'Run cargo check':
                             vscode.commands.executeCommand('rustcodepro.rustCheck');
@@ -1449,6 +1473,31 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.deleteProfile',
             callback: deleteProfile
+        },
+        {
+            command: 'rustcodepro.nextest',
+            callback: async () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+
+                if (!checkCargoNextestInstalled()) {
+                    vscode.window.showErrorMessage(
+                        'cargo-nextest is not installed. Please install it by running `cargo install cargo-nextest`.'
+                    );
+                    return;
+                }
+
+                const additionalArgs = await showAdditionalOptions('cargo nextest');
+                runTerminalCommand('cargo nextest run', additionalArgs, terminal, projectDir);
+            }
         }
     ];
 
@@ -1568,3 +1617,4 @@ function enableCargoFeatures(projectDir: string, features: string[]) {
 export function deactivate() {
     console.log('Rust Code Pro is now deactivated!');
 }
+

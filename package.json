@@ -1,7 +1,7 @@
 {
   "name": "rustcodepro",
   "displayName": "RustCodePro",
-  "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, and fix.",
+  "description": "A comprehensive VS Code extension to format, lint, test, check, and fix Rust code using cargo fmt, clippy, test, check, nextest, and fix.",
   "version": "0.10.0",
   "publisher": "gencmurat",
   "icon": "icon.png",
@@ -35,6 +35,7 @@
     "onCommand:rustcodepro.cargoGenerate",
     "onCommand:rustcodepro.manageCargoFeatures",
     "onCommand:rustcodepro.sendToPlayground",
+    "onCommand:rustcodepro.nextest",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -168,6 +169,16 @@
       {
         "command": "rustcodepro.editProfile",
         "title": "Edit Profile",
+        "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.deleteProfile",
+        "title": "Delete Profile",
+        "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.nextest",
+        "title": "Run cargo nextest",
         "category": "Rust"
       }
     ],
