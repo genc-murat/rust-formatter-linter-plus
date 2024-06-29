@@ -35,7 +35,6 @@
     "onCommand:rustcodepro.cargoGenerate",
     "onCommand:rustcodepro.manageCargoFeatures",
     "onCommand:rustcodepro.sendToPlayground",
-    "onCommand:rustcodepro.nextest",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -53,7 +52,7 @@
       },
       {
         "command": "rustcodepro.rustTest",
-        "title": "Run cargo test",
+        "title": "Run Tests",
         "category": "Rust"
       },
       {
@@ -174,11 +173,6 @@
       {
         "command": "rustcodepro.deleteProfile",
         "title": "Delete Profile",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.nextest",
-        "title": "Run cargo nextest",
         "category": "Rust"
       }
     ],

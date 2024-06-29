@@ -175,7 +175,7 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
         if (release === 'Release') {
             options.push('--release');
         }
-    } else if (command === 'cargo test') {
+    } else if (command === 'cargo test' || command === 'cargo nextest') {
         const testOptions = await vscode.window.showQuickPick(['All Tests', 'Specific Test'], {
             placeHolder: 'Select test type'
         });
@@ -222,18 +222,6 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
         });
         if (clippyOptions === 'Fix') {
             options.push('--fix');
-        }
-    } else if (command === 'cargo nextest') {
-        const nextestOptions = await vscode.window.showQuickPick(['All Tests', 'Specific Test'], {
-            placeHolder: 'Select test type'
-        });
-        if (nextestOptions === 'Specific Test') {
-            const testName = await vscode.window.showInputBox({
-                prompt: 'Enter the test name'
-            });
-            if (testName) {
-                options.push(`--test ${testName}`);
-            }
         }
     }
     return options;
@@ -1038,8 +1026,41 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                const additionalArgs = await showAdditionalOptions('cargo test');
-                runTerminalCommand('cargo test', additionalArgs, terminal, projectDir);
+
+                const testRunner = await vscode.window.showQuickPick(['cargo test', 'cargo nextest'], {
+                    placeHolder: 'Select the test runner'
+                });
+
+                if (!testRunner) {
+                    vscode.window.showErrorMessage('Test runner selection is required.');
+                    return;
+                }
+
+                if (testRunner === 'cargo nextest' && !checkCargoNextestInstalled()) {
+                    vscode.window.showErrorMessage(
+                        'cargo-nextest is not installed. Please install it by running `cargo install cargo-nextest`.'
+                    );
+                    return;
+                }
+
+                let additionalArgs: string[] = [];
+                if (testRunner === 'cargo test') {
+                    additionalArgs = await showAdditionalOptions('cargo test');
+                } else if (testRunner === 'cargo nextest') {
+                    const nextestCommand = await vscode.window.showQuickPick(
+                        ['run', 'list', 'archive', 'show-config', 'self'],
+                        { placeHolder: 'Select the cargo nextest command' }
+                    );
+
+                    if (!nextestCommand) {
+                        vscode.window.showErrorMessage('Nextest command selection is required.');
+                        return;
+                    }
+
+                    additionalArgs = [nextestCommand, ...await showAdditionalOptions(`cargo nextest ${nextestCommand}`)];
+                }
+
+                runTerminalCommand(testRunner, additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -1271,8 +1292,7 @@ export function activate(context: vscode.ExtensionContext) {
                 const buildCommands: vscode.QuickPickItem[] = [
                     { label: 'Run cargo fmt', description: 'Format Rust code' },
                     { label: 'Run cargo clippy', description: 'Lint Rust code' },
-                    { label: 'Run cargo test', description: 'Run Rust tests' },
-                    { label: 'Run cargo nextest', description: 'Run nextest for Rust code' },
+                    { label: 'Run Tests', description: 'Run Rust tests' },
                     { label: 'Run cargo check', description: 'Check Rust code' },
                     { label: 'Run cargo build', description: 'Build Rust code' },
                     { label: 'Run cargo doc', description: 'Generate documentation for Rust code' },
@@ -1357,11 +1377,8 @@ export function activate(context: vscode.ExtensionContext) {
                         case 'Run cargo clippy':
                             vscode.commands.executeCommand('rustcodepro.rustClippy');
                             break;
-                        case 'Run cargo test':
+                        case 'Run Tests':
                             vscode.commands.executeCommand('rustcodepro.rustTest');
-                            break;
-                        case 'Run cargo nextest':
-                            vscode.commands.executeCommand('rustcodepro.nextest');
                             break;
                         case 'Run cargo check':
                             vscode.commands.executeCommand('rustcodepro.rustCheck');
@@ -1473,31 +1490,6 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.deleteProfile',
             callback: deleteProfile
-        },
-        {
-            command: 'rustcodepro.nextest',
-            callback: async () => {
-                const editor = vscode.window.activeTextEditor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
-                }
-                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
-                if (!projectDir) {
-                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
-                    return;
-                }
-
-                if (!checkCargoNextestInstalled()) {
-                    vscode.window.showErrorMessage(
-                        'cargo-nextest is not installed. Please install it by running `cargo install cargo-nextest`.'
-                    );
-                    return;
-                }
-
-                const additionalArgs = await showAdditionalOptions('cargo nextest');
-                runTerminalCommand('cargo nextest run', additionalArgs, terminal, projectDir);
-            }
         }
     ];
 
@@ -1617,4 +1609,3 @@ function enableCargoFeatures(projectDir: string, features: string[]) {
 export function deactivate() {
     console.log('Rust Code Pro is now deactivated!');
 }
-
