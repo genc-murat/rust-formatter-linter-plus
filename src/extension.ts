@@ -1144,8 +1144,26 @@ export function activate(context: vscode.ExtensionContext) {
                 }
 
                 if (testTool === 'cargo nextest run' && !checkCargoNextestInstalled()) {
-                    vscode.window.showErrorMessage('cargo nextest is not installed. Please install it.');
-                    return;
+                    const installNextest = await vscode.window.showWarningMessage(
+                        'cargo nextest is not installed. Do you want to install it?',
+                        'Yes',
+                        'No'
+                    );
+                    if (installNextest === 'Yes') {
+                        try {
+                            await execPromise('curl -LsSf https://get.nexte.st/latest/linux | tar zxf - -C ${CARGO_HOME:-~/.cargo}/bin');
+                            vscode.window.showInformationMessage('cargo nextest installed successfully.');
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                vscode.window.showErrorMessage(`Failed to install cargo nextest: ${error.message}`);
+                            } else {
+                                vscode.window.showErrorMessage('Failed to install cargo nextest: Unknown error occurred.');
+                            }
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
                 }
 
                 const editor = vscode.window.activeTextEditor;
