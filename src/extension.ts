@@ -910,7 +910,6 @@ async function editProfile() {
     vscode.window.showInformationMessage(`Profile '${selectedProfile}' updated.`);
 }
 
-
 async function deleteProfile() {
     const config = vscode.workspace.getConfiguration('rustCodePro');
     const profiles = config.get<{ [key: string]: any }>('profiles') || {};
@@ -949,7 +948,6 @@ async function deleteProfile() {
     vscode.window.showInformationMessage(`Profile '${profileToDelete}' deleted.`);
 }
 
-
 async function configureProfile(existingProfile?: { [key: string]: any }): Promise<{ [key: string]: any }> {
     const profile = existingProfile || {};
 
@@ -984,7 +982,6 @@ async function configureProfile(existingProfile?: { [key: string]: any }): Promi
 
     return profile;
 }
-
 
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Code Pro is now active!');
@@ -1256,13 +1253,13 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('No active editor found.');
                     return;
                 }
-            
+
                 const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
                 if (!projectDir) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-            
+
                 await selectCargoFeatures(projectDir);
             }
         },
@@ -1293,12 +1290,10 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
-                    { label: 'Run cargo llvm-cov', description: 'Run code coverage with cargo llvm-cov' },
-                    { label: 'Run cargo tarpaulin', description: 'Run code coverage with cargo tarpaulin' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
-        
+
                 const projectManagementCommands: vscode.QuickPickItem[] = [
                     { label: 'Install Rust Toolchain', description: 'Install a specific Rust toolchain' },
                     { label: 'Update Rust Toolchains', description: 'Update all Rust toolchains' },
@@ -1309,12 +1304,19 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
-        
+
                 const diagnosticsCommands: vscode.QuickPickItem[] = [
                     { label: 'Show Workspace Diagnostics Summary', description: 'Run diagnostics across the entire workspace and show a summary' },
                     { label: 'Run refactor suggestions', description: 'Run cargo fix to apply suggested refactorings' },
                     { label: 'Switch Configuration Profile', description: 'Switch between different configuration profiles' },
                     { label: 'Manage Configuration Profiles', description: 'Create, edit, and delete configuration profiles' },
+                    { label: '---', kind: vscode.QuickPickItemKind.Separator },
+                    { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
+                ];
+
+                const codeCoverageCommands: vscode.QuickPickItem[] = [
+                    { label: 'Run cargo llvm-cov', description: 'Run code coverage with cargo llvm-cov' },
+                    { label: 'Run cargo tarpaulin', description: 'Run code coverage with cargo tarpaulin' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
@@ -1327,43 +1329,45 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
-        
+
                 const commandCategories: { [key: string]: vscode.QuickPickItem[] } = {
                     'Build Commands': buildCommands,
                     'Project Management': projectManagementCommands,
                     'Diagnostics & Refactor': diagnosticsCommands,
+                    'Code Coverage': codeCoverageCommands,
                     'Profile Management': profileManagementCommands
                 };
-        
+
                 const items: vscode.QuickPickItem[] = [
                     { label: 'Build Commands', description: 'Commands related to building and running Rust code' },
                     { label: 'Project Management', description: 'Commands related to managing Rust projects' },
                     { label: 'Diagnostics & Refactor', description: 'Commands related to diagnostics and refactoring' },
+                    { label: 'Code Coverage', description: 'Commands related to code coverage analysis' },
                     { label: 'Profile Management', description: 'Commands related to managing configuration profiles' }
                 ];
-        
+
                 let selectedItem = await vscode.window.showQuickPick(items, {
                     placeHolder: 'Select a Rust command category'
                 });
-        
+
                 while (selectedItem) {
                     const commands = commandCategories[selectedItem.label];
-        
+
                     const selectedCommand = await vscode.window.showQuickPick(commands, {
                         placeHolder: 'Select a Rust command'
                     });
-        
+
                     if (!selectedCommand) {
                         return;
                     }
-        
+
                     if (selectedCommand.label === '$(arrow-left) Go Back') {
                         selectedItem = await vscode.window.showQuickPick(items, {
                             placeHolder: 'Select a Rust command category'
                         });
                         continue;
                     }
-        
+
                     switch (selectedCommand.label) {
                         case 'Run cargo fmt':
                             vscode.commands.executeCommand('rustcodepro.rustFmt');
@@ -1447,7 +1451,7 @@ export function activate(context: vscode.ExtensionContext) {
                             vscode.commands.executeCommand('rustcodepro.switchProfile');
                             break;
                     }
-        
+
                     return;
                 }
             }
@@ -1539,8 +1543,7 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-                const additionalArgs = await showAdditionalOptions('cargo tarpaulin');
-                runTerminalCommand('cargo tarpaulin', additionalArgs, terminal, projectDir);
+                runTerminalCommand('cargo tarpaulin', [], terminal, projectDir);
             }
         }
     ];
