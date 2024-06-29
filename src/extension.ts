@@ -1644,8 +1644,26 @@ export function activate(context: vscode.ExtensionContext) {
             callback: async () => {
                 const toolInstalled = checkCargoLlvmCovInstalled();
                 if (!toolInstalled) {
-                    vscode.window.showErrorMessage('cargo-llvm-cov is not installed. Please install it with `cargo install cargo-llvm-cov`.');
-                    return;
+                    const installLlvmCov = await vscode.window.showWarningMessage(
+                        'cargo-llvm-cov is not installed. Do you want to install it using `cargo install cargo-llvm-cov`?',
+                        'Yes',
+                        'No'
+                    );
+                    if (installLlvmCov === 'Yes') {
+                        try {
+                            await execPromise('cargo install cargo-llvm-cov');
+                            vscode.window.showInformationMessage('cargo-llvm-cov installed successfully.');
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                vscode.window.showErrorMessage(`Failed to install cargo-llvm-cov: ${error.message}`);
+                            } else {
+                                vscode.window.showErrorMessage('Failed to install cargo-llvm-cov: Unknown error occurred.');
+                            }
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
                 }
                 const testTool = await vscode.window.showQuickPick(['cargo test', 'cargo nextest run'], {
                     placeHolder: 'Select the test tool to use with cargo-llvm-cov'
