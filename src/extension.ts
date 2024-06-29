@@ -175,6 +175,15 @@ function checkCargoLlvmCovInstalled(): boolean {
     }
 }
 
+function checkTarpaulinInstalled(): boolean {
+    try {
+        cp.execSync('cargo tarpaulin --version', { stdio: 'ignore' });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function showAdditionalOptions(command: string): Promise<string[]> {
     const options = [];
     if (command === 'cargo build') {
@@ -1285,6 +1294,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
                     { label: 'Run cargo llvm-cov', description: 'Run code coverage with cargo llvm-cov' },
+                    { label: 'Run cargo tarpaulin', description: 'Run code coverage with cargo tarpaulin' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
@@ -1430,6 +1440,9 @@ export function activate(context: vscode.ExtensionContext) {
                         case 'Run cargo llvm-cov':
                             vscode.commands.executeCommand('rustcodepro.rustLlvmCov');
                             break;
+                        case 'Run cargo tarpaulin':
+                            vscode.commands.executeCommand('rustcodepro.rustTarpaulin');
+                            break;
                         case 'Switch Profile':
                             vscode.commands.executeCommand('rustcodepro.switchProfile');
                             break;
@@ -1506,6 +1519,28 @@ export function activate(context: vscode.ExtensionContext) {
                 const additionalArgs = await showAdditionalOptions(testTool);
                 const llvmCovCommand = testTool === 'cargo nextest run' ? 'cargo llvm-cov nextest' : 'cargo llvm-cov test';
                 runTerminalCommand(llvmCovCommand, additionalArgs, terminal, projectDir);
+            }
+        },
+        {
+            command: 'rustcodepro.rustTarpaulin',
+            callback: async () => {
+                const toolInstalled = checkTarpaulinInstalled();
+                if (!toolInstalled) {
+                    vscode.window.showErrorMessage('cargo-tarpaulin is not installed. Please install it with `cargo install cargo-tarpaulin`.');
+                    return;
+                }
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+                const additionalArgs = await showAdditionalOptions('cargo tarpaulin');
+                runTerminalCommand('cargo tarpaulin', additionalArgs, terminal, projectDir);
             }
         }
     ];

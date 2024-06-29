@@ -36,6 +36,7 @@
     "onCommand:rustcodepro.manageCargoFeatures",
     "onCommand:rustcodepro.sendToPlayground",
     "onCommand:rustcodepro.rustCoverage",
+    "onCommand:rustcodepro.rustTarpaulin",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",
@@ -179,6 +180,11 @@
       {
         "command": "rustcodepro.rustCoverage",
         "title": "Run cargo llvm-cov",
+        "category": "Rust"
+      },
+      {
+        "command": "rustcodepro.rustTarpaulin",
+        "title": "Run cargo tarpaulin",
         "category": "Rust"
       }
     ],
