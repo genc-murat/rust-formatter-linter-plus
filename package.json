@@ -6,265 +6,271 @@
   "publisher": "gencmurat",
   "icon": "icon.png",
   "engines": {
-    "vscode": "^1.90.0"
+      "vscode": "^1.90.0"
   },
   "categories": [
-    "Other"
+      "Other"
   ],
   "activationEvents": [
-    "onCommand:rustcodepro.rustFmt",
-    "onCommand:rustcodepro.rustClippy",
-    "onCommand:rustcodepro.rustTest",
-    "onCommand:rustcodepro.rustCheck",
-    "onCommand:rustcodepro.rustBuild",
-    "onCommand:rustcodepro.rustDoc",
-    "onCommand:rustcodepro.rustClean",
-    "onCommand:rustcodepro.rustRun",
-    "onCommand:rustcodepro.rustBench",
-    "onCommand:rustcodepro.rustFmtFile",
-    "onCommand:rustcodepro.rustClippyFile",
-    "onCommand:rustcodepro.editRustfmtConfig",
-    "onCommand:rustcodepro.editClippyConfig",
-    "onCommand:rustcodepro.rustFix",
-    "onCommand:rustcodepro.showQuickPick",
-    "onCommand:rustcodepro.rustAnalyzer",
-    "onCommand:rustcodepro.workspaceDiagnosticsSummary",
-    "onCommand:rustcodepro.installToolchain",
-    "onCommand:rustcodepro.updateToolchain",
-    "onCommand:rustcodepro.switchToolchain",
-    "onCommand:rustcodepro.cargoGenerate",
-    "onCommand:rustcodepro.manageCargoFeatures",
-    "onCommand:rustcodepro.sendToPlayground",
-    "onCommand:rustcodepro.rustCoverage",
-    "onCommand:rustcodepro.rustTarpaulin",
-    "onLanguage:rust"
+      "onCommand:rustcodepro.rustFmt",
+      "onCommand:rustcodepro.rustClippy",
+      "onCommand:rustcodepro.rustTest",
+      "onCommand:rustcodepro.rustCheck",
+      "onCommand:rustcodepro.rustBuild",
+      "onCommand:rustcodepro.rustDoc",
+      "onCommand:rustcodepro.rustClean",
+      "onCommand:rustcodepro.rustRun",
+      "onCommand:rustcodepro.rustBench",
+      "onCommand:rustcodepro.rustFmtFile",
+      "onCommand:rustcodepro.rustClippyFile",
+      "onCommand:rustcodepro.editRustfmtConfig",
+      "onCommand:rustcodepro.editClippyConfig",
+      "onCommand:rustcodepro.rustFix",
+      "onCommand:rustcodepro.showQuickPick",
+      "onCommand:rustcodepro.rustAnalyzer",
+      "onCommand:rustcodepro.workspaceDiagnosticsSummary",
+      "onCommand:rustcodepro.installToolchain",
+      "onCommand:rustcodepro.updateToolchain",
+      "onCommand:rustcodepro.switchToolchain",
+      "onCommand:rustcodepro.cargoGenerate",
+      "onCommand:rustcodepro.manageCargoFeatures",
+      "onCommand:rustcodepro.sendToPlayground",
+      "onCommand:rustcodepro.rustCoverage",
+      "onCommand:rustcodepro.rustTarpaulin",
+      "onCommand:rustcodepro.macroExpand",
+      "onLanguage:rust"
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "rustcodepro.rustFmt",
-        "title": "Run cargo fmt",
-        "category": "Rust"
+      "commands": [
+          {
+              "command": "rustcodepro.rustFmt",
+              "title": "Run cargo fmt",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustClippy",
+              "title": "Run cargo clippy",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustTest",
+              "title": "Run Tests",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustCheck",
+              "title": "Run cargo check",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustBuild",
+              "title": "Run cargo build",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustDoc",
+              "title": "Run cargo doc",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustClean",
+              "title": "Run cargo clean",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustRun",
+              "title": "Run cargo run",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustBench",
+              "title": "Run cargo bench",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustFmtFile",
+              "title": "Format this file with cargo fmt",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustClippyFile",
+              "title": "Lint this file with cargo clippy",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.editRustfmtConfig",
+              "title": "Edit rustfmt.toml",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.editClippyConfig",
+              "title": "Edit clippy.toml",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustFix",
+              "title": "Run cargo fix",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.showQuickPick",
+              "title": "Show Rust Commands",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustAnalyzer",
+              "title": "Run rust-analyzer diagnostics",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.workspaceDiagnosticsSummary",
+              "title": "Show Workspace Diagnostics Summary",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.installToolchain",
+              "title": "Install Rust Toolchain",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.updateToolchain",
+              "title": "Update Rust Toolchain",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.switchToolchain",
+              "title": "Switch Rust Toolchain",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.cargoGenerate",
+              "title": "Run cargo-generate",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.manageCargoFeatures",
+              "title": "Manage Cargo Features",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.sendToPlayground",
+              "title": "Send to Rust Playground",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.switchProfile",
+              "title": "Switch Profile",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.createProfile",
+              "title": "Create Profile",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.editProfile",
+              "title": "Edit Profile",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.deleteProfile",
+              "title": "Delete Profile",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustLlvmCov",
+              "title": "Run cargo llvm-cov",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.rustTarpaulin",
+              "title": "Run cargo tarpaulin",
+              "category": "Rust"
+          },
+          {
+              "command": "rustcodepro.macroExpand",
+              "title": "Expand Rust Macro",
+              "category": "Rust"
+          }
+      ],
+      "menus": {
+          "editor/context": [
+              {
+                  "command": "rustcodepro.sendToPlayground",
+                  "group": "navigation",
+                  "when": "editorLangId == rust"
+              }
+          ]
       },
-      {
-        "command": "rustcodepro.rustClippy",
-        "title": "Run cargo clippy",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustTest",
-        "title": "Run Tests",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustCheck",
-        "title": "Run cargo check",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustBuild",
-        "title": "Run cargo build",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustDoc",
-        "title": "Run cargo doc",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustClean",
-        "title": "Run cargo clean",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustRun",
-        "title": "Run cargo run",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustBench",
-        "title": "Run cargo bench",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustFmtFile",
-        "title": "Format this file with cargo fmt",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustClippyFile",
-        "title": "Lint this file with cargo clippy",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.editRustfmtConfig",
-        "title": "Edit rustfmt.toml",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.editClippyConfig",
-        "title": "Edit clippy.toml",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustFix",
-        "title": "Run cargo fix",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.showQuickPick",
-        "title": "Show Rust Commands",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustAnalyzer",
-        "title": "Run rust-analyzer diagnostics",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.workspaceDiagnosticsSummary",
-        "title": "Show Workspace Diagnostics Summary",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.installToolchain",
-        "title": "Install Rust Toolchain",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.updateToolchain",
-        "title": "Update Rust Toolchain",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.switchToolchain",
-        "title": "Switch Rust Toolchain",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.cargoGenerate",
-        "title": "Run cargo-generate",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.manageCargoFeatures",
-        "title": "Manage Cargo Features",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.sendToPlayground",
-        "title": "Send to Rust Playground",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.switchProfile",
-        "title": "Switch Profile",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.createProfile",
-        "title": "Create Profile",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.editProfile",
-        "title": "Edit Profile",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.deleteProfile",
-        "title": "Delete Profile",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustLlvmCov",
-        "title": "Run cargo llvm-cov",
-        "category": "Rust"
-      },
-      {
-        "command": "rustcodepro.rustTarpaulin",
-        "title": "Run cargo tarpaulin",
-        "category": "Rust"
-      }
-    ],
-    "menus": {
-      "editor/context": [
-        {
-          "command": "rustcodepro.sendToPlayground",
-          "group": "navigation",
-          "when": "editorLangId == rust"
-        }
-      ]
-    },
-    "configuration": {
-      "type": "object",
-      "title": "Rust Code Pro Configuration",
-      "properties": {
-        "rustCodePro.realTimeLinting": {
-          "type": "boolean",
-          "default": true,
-          "description": "Enable real-time linting feedback"
-        },
-        "rustCodePro.formatOnSave": {
-          "type": "boolean",
-          "default": true,
-          "description": "Run cargo fmt on save"
-        },
-        "rustCodePro.testOnSave": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run cargo test on save"
-        },
-        "rustCodePro.checkOnSave": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run cargo check on save"
-        },
-        "rustCodePro.buildOnSave": {
-          "type": "boolean",
-          "default": false,
-          "description": "Run cargo build on save"
-        },
-        "rustCodePro.formatArgs": {
-          "type": "array",
-          "default": [],
-          "description": "Additional arguments for cargo fmt"
-        },
-        "rustCodePro.lintArgs": {
-          "type": "array",
-          "default": [],
-          "description": "Additional arguments for cargo clippy"
-        },
-        "rustCodePro.outputChannelName": {
-          "type": "string",
-          "default": "Rust Code Pro",
-          "description": "Name of the output channel"
-        },
-        "rustCodePro.profiles": {
+      "configuration": {
           "type": "object",
-          "default": {},
-          "description": "Configuration profiles for different Rust projects"
-        }
+          "title": "Rust Code Pro Configuration",
+          "properties": {
+              "rustCodePro.realTimeLinting": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Enable real-time linting feedback"
+              },
+              "rustCodePro.formatOnSave": {
+                  "type": "boolean",
+                  "default": true,
+                  "description": "Run cargo fmt on save"
+              },
+              "rustCodePro.testOnSave": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Run cargo test on save"
+              },
+              "rustCodePro.checkOnSave": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Run cargo check on save"
+              },
+              "rustCodePro.buildOnSave": {
+                  "type": "boolean",
+                  "default": false,
+                  "description": "Run cargo build on save"
+              },
+              "rustCodePro.formatArgs": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional arguments for cargo fmt"
+              },
+              "rustCodePro.lintArgs": {
+                  "type": "array",
+                  "default": [],
+                  "description": "Additional arguments for cargo clippy"
+              },
+              "rustCodePro.outputChannelName": {
+                  "type": "string",
+                  "default": "Rust Code Pro",
+                  "description": "Name of the output channel"
+              },
+              "rustCodePro.profiles": {
+                  "type": "object",
+                  "default": {},
+                  "description": "Configuration profiles for different Rust projects"
+              }
+          }
       }
-    }
   },
   "devDependencies": {
-    "@types/node": "^14.14.35",
-    "@types/vscode": "^1.55.0",
-    "typescript": "^4.2.4",
-    "vscode-test": "^1.4.0"
+      "@types/node": "^14.14.35",
+      "@types/vscode": "^1.55.0",
+      "typescript": "^4.2.4",
+      "vscode-test": "^1.4.0"
   },
   "scripts": {
-    "vscode:prepublish": "tsc -p ./",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint . --ext .ts"
+      "vscode:prepublish": "tsc -p ./",
+      "compile": "tsc -p ./",
+      "watch": "tsc -watch -p ./",
+      "pretest": "npm run compile && npm run lint",
+      "lint": "eslint . --ext .ts"
   },
   "dependencies": {
-    "@types/axios": "^0.14.0",
-    "axios": "^0.21.1",
-    "toml": "^3.0.0"
+      "@types/axios": "^0.14.0",
+      "axios": "^0.21.1",
+      "toml": "^3.0.0"
   }
 }

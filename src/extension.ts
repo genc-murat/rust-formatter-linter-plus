@@ -983,6 +983,110 @@ async function configureProfile(existingProfile?: { [key: string]: any }): Promi
     return profile;
 }
 
+function execPromiseExpand(command: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+        cp.exec(command, { cwd }, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve({ stdout, stderr });
+            }
+        });
+    });
+}
+
+async function expandMacro() {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
+    }
+
+    const filePath = editor.document.uri.fsPath;
+    const projectDir = findCargoTomlDir(filePath);
+    if (!projectDir) {
+        vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+        return;
+    }
+
+    const selection = editor.selection;
+    const selectedText = editor.document.getText(selection);
+
+    if (!selectedText) {
+        vscode.window.showErrorMessage('No macro selected.');
+        return;
+    }
+
+    const outputChannel = vscode.window.createOutputChannel('Macro Expansion');
+    outputChannel.show(true);
+
+    // Check if cargo expand is installed
+    try {
+        cp.execSync('cargo expand --version', { stdio: 'ignore' });
+    } catch (error) {
+        const installExpand = await vscode.window.showWarningMessage(
+            'cargo expand is not installed. Do you want to install it?',
+            'Yes',
+            'No'
+        );
+        if (installExpand === 'Yes') {
+            try {
+                cp.execSync('cargo install cargo-expand', { stdio: 'inherit' });
+                vscode.window.showInformationMessage('cargo expand installed successfully.');
+            } catch (installError) {
+                if (installError instanceof Error) {
+                    vscode.window.showErrorMessage(`Failed to install cargo expand: ${installError.message}`);
+                } else {
+                    vscode.window.showErrorMessage('Failed to install cargo expand: Unknown error occurred.');
+                }
+                return;
+            }
+        } else {
+            return;
+        }
+    }
+
+    try {
+        const { stdout, stderr } = await execPromiseExpand(`cargo expand`, projectDir);
+        if (stderr) {
+            outputChannel.appendLine(`stderr: ${stderr}`);
+        }
+        outputChannel.appendLine(stdout);
+
+        const macroExpansion = stdout.includes(selectedText) ? stdout.split(selectedText)[1] : stdout;
+
+        const panel = vscode.window.createWebviewPanel(
+            'macroExpansion',
+            'Macro Expansion',
+            vscode.ViewColumn.Beside,
+            { enableScripts: true }
+        );
+
+        panel.webview.html = `
+            <html>
+            <head>
+                <style>
+                    body { font-family: Arial, sans-serif; }
+                    pre { background: #1e1e1e; color: #d4d4d4; padding: 10px; border-radius: 5px; }
+                </style>
+            </head>
+            <body>
+                <h1>Macro Expansion</h1>
+                <pre>${macroExpansion}</pre>
+            </body>
+            </html>`;
+    } catch (error) {
+        if (error instanceof Error) {
+            outputChannel.appendLine(`Error: ${error.message}`);
+            outputChannel.appendLine(`Error stack: ${error.stack}`);
+            vscode.window.showErrorMessage(`Error: ${error.message}`);
+        } else {
+            outputChannel.appendLine(`Unknown error: ${JSON.stringify(error)}`);
+            vscode.window.showErrorMessage('Unknown error occurred.');
+        }
+    }
+}
+
 export function activate(context: vscode.ExtensionContext) {
     console.log('Rust Code Pro is now active!');
 
@@ -1545,6 +1649,10 @@ export function activate(context: vscode.ExtensionContext) {
                 }
                 runTerminalCommand('cargo tarpaulin', [], terminal, projectDir);
             }
+        },
+        {
+            command: 'rustcodepro.macroExpand',
+            callback: expandMacro
         }
     ];
 
