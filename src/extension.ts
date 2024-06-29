@@ -166,6 +166,15 @@ function checkCargoNextestInstalled(): boolean {
     }
 }
 
+function checkCargoLlvmCovInstalled(): boolean {
+    try {
+        cp.execSync('cargo llvm-cov --version', { stdio: 'ignore' });
+        return true;
+    } catch {
+        return false;
+    }
+}
+
 async function showAdditionalOptions(command: string): Promise<string[]> {
     const options = [];
     if (command === 'cargo build') {
@@ -1064,6 +1073,31 @@ export function activate(context: vscode.ExtensionContext) {
             }
         },
         {
+            command: 'rustcodepro.rustCoverage',
+            callback: async () => {
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+
+                if (!checkCargoLlvmCovInstalled()) {
+                    vscode.window.showErrorMessage(
+                        'cargo-llvm-cov is not installed. Please install it by running `cargo install cargo-llvm-cov`.'
+                    );
+                    return;
+                }
+
+                const additionalArgs = await showAdditionalOptions('cargo llvm-cov');
+                runTerminalCommand('cargo llvm-cov', additionalArgs, terminal, projectDir);
+            }
+        },
+        {
             command: 'rustcodepro.rustCheck',
             callback: async () => {
                 const editor = vscode.window.activeTextEditor;
@@ -1301,6 +1335,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
+                    { label: 'Run cargo llvm-cov', description: 'Run LLVM coverage' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
@@ -1445,6 +1480,9 @@ export function activate(context: vscode.ExtensionContext) {
                             break;
                         case 'Switch Profile':
                             vscode.commands.executeCommand('rustcodepro.switchProfile');
+                            break;
+                        case 'Run cargo llvm-cov':
+                            vscode.commands.executeCommand('rustcodepro.rustCoverage');
                             break;
                     }
         
