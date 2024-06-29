@@ -1692,8 +1692,26 @@ export function activate(context: vscode.ExtensionContext) {
             callback: async () => {
                 const toolInstalled = checkTarpaulinInstalled();
                 if (!toolInstalled) {
-                    vscode.window.showErrorMessage('cargo-tarpaulin is not installed. Please install it with `cargo install cargo-tarpaulin`.');
-                    return;
+                    const installTarpaulin = await vscode.window.showWarningMessage(
+                        'cargo-tarpaulin is not installed. Do you want to install it using `cargo install cargo-tarpaulin`?',
+                        'Yes',
+                        'No'
+                    );
+                    if (installTarpaulin === 'Yes') {
+                        try {
+                            await execPromise('cargo install cargo-tarpaulin');
+                            vscode.window.showInformationMessage('cargo-tarpaulin installed successfully.');
+                        } catch (error) {
+                            if (error instanceof Error) {
+                                vscode.window.showErrorMessage(`Failed to install cargo-tarpaulin: ${error.message}`);
+                            } else {
+                                vscode.window.showErrorMessage('Failed to install cargo-tarpaulin: Unknown error occurred.');
+                            }
+                            return;
+                        }
+                    } else {
+                        return;
+                    }
                 }
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
