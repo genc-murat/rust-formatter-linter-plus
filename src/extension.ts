@@ -983,18 +983,6 @@ async function configureProfile(existingProfile?: { [key: string]: any }): Promi
     return profile;
 }
 
-function execPromiseExpand(command: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
-    return new Promise((resolve, reject) => {
-        cp.exec(command, { cwd }, (error, stdout, stderr) => {
-            if (error) {
-                reject(error);
-            } else {
-                resolve({ stdout, stderr });
-            }
-        });
-    });
-}
-
 async function expandMacro() {
     const editor = vscode.window.activeTextEditor;
     if (!editor) {
@@ -1085,6 +1073,18 @@ async function expandMacro() {
             vscode.window.showErrorMessage('Unknown error occurred.');
         }
     }
+}
+
+function execPromiseExpand(command: string, cwd: string): Promise<{ stdout: string; stderr: string }> {
+    return new Promise((resolve, reject) => {
+        cp.exec(command, { cwd }, (error, stdout, stderr) => {
+            if (error) {
+                reject(error);
+            } else {
+                resolve({ stdout, stderr });
+            }
+        });
+    });
 }
 
 export function activate(context: vscode.ExtensionContext) {

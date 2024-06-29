@@ -200,6 +200,11 @@
                   "command": "rustcodepro.sendToPlayground",
                   "group": "navigation",
                   "when": "editorLangId == rust"
+              },
+              {
+                  "command": "rustcodepro.macroExpand",
+                  "group": "navigation",
+                  "when": "editorLangId == rust"
               }
           ]
       },
