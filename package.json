@@ -35,6 +35,7 @@
     "onCommand:rustcodepro.cargoGenerate",
     "onCommand:rustcodepro.manageCargoFeatures",
     "onCommand:rustcodepro.sendToPlayground",
+    "onCommand:rustcodepro.rustCoverage",
     "onLanguage:rust"
   ],
   "main": "./out/extension.js",

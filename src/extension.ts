@@ -184,7 +184,7 @@ async function showAdditionalOptions(command: string): Promise<string[]> {
         if (release === 'Release') {
             options.push('--release');
         }
-    } else if (command === 'cargo test' || command === 'cargo nextest') {
+    } else if (command === 'cargo test' || command === 'cargo nextest run') {
         const testOptions = await vscode.window.showQuickPick(['All Tests', 'Specific Test'], {
             placeHolder: 'Select test type'
         });
@@ -1025,56 +1025,13 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.rustTest',
             callback: async () => {
-                const editor = vscode.window.activeTextEditor;
-                if (!editor) {
-                    vscode.window.showErrorMessage('No active editor found.');
-                    return;
-                }
-                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
-                if (!projectDir) {
-                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
-                    return;
-                }
-
-                const testRunner = await vscode.window.showQuickPick(['cargo test', 'cargo nextest'], {
-                    placeHolder: 'Select the test runner'
+                const testTool = await vscode.window.showQuickPick(['cargo test', 'cargo nextest run'], {
+                    placeHolder: 'Select the test tool to use'
                 });
-
-                if (!testRunner) {
-                    vscode.window.showErrorMessage('Test runner selection is required.');
+                if (!testTool) {
+                    vscode.window.showErrorMessage('No test tool selected.');
                     return;
                 }
-
-                if (testRunner === 'cargo nextest' && !checkCargoNextestInstalled()) {
-                    vscode.window.showErrorMessage(
-                        'cargo-nextest is not installed. Please install it by running `cargo install cargo-nextest`.'
-                    );
-                    return;
-                }
-
-                let additionalArgs: string[] = [];
-                if (testRunner === 'cargo test') {
-                    additionalArgs = await showAdditionalOptions('cargo test');
-                } else if (testRunner === 'cargo nextest') {
-                    const nextestCommand = await vscode.window.showQuickPick(
-                        ['run', 'list', 'archive', 'show-config', 'self'],
-                        { placeHolder: 'Select the cargo nextest command' }
-                    );
-
-                    if (!nextestCommand) {
-                        vscode.window.showErrorMessage('Nextest command selection is required.');
-                        return;
-                    }
-
-                    additionalArgs = [nextestCommand, ...await showAdditionalOptions(`cargo nextest ${nextestCommand}`)];
-                }
-
-                runTerminalCommand(testRunner, additionalArgs, terminal, projectDir);
-            }
-        },
-        {
-            command: 'rustcodepro.rustCoverage',
-            callback: async () => {
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
                     vscode.window.showErrorMessage('No active editor found.');
@@ -1085,16 +1042,8 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('Cargo.toml not found in the project.');
                     return;
                 }
-
-                if (!checkCargoLlvmCovInstalled()) {
-                    vscode.window.showErrorMessage(
-                        'cargo-llvm-cov is not installed. Please install it by running `cargo install cargo-llvm-cov`.'
-                    );
-                    return;
-                }
-
-                const additionalArgs = await showAdditionalOptions('cargo llvm-cov');
-                runTerminalCommand('cargo llvm-cov', additionalArgs, terminal, projectDir);
+                const additionalArgs = await showAdditionalOptions(testTool);
+                runTerminalCommand(testTool, additionalArgs, terminal, projectDir);
             }
         },
         {
@@ -1335,7 +1284,7 @@ export function activate(context: vscode.ExtensionContext) {
                     { label: 'Run cargo bench', description: 'Benchmark Rust code' },
                     { label: 'Run cargo fix', description: 'Fix Rust code' },
                     { label: 'Run rust-analyzer diagnostics', description: 'Run Rust Analyzer diagnostics' },
-                    { label: 'Run cargo llvm-cov', description: 'Run LLVM coverage' },
+                    { label: 'Run cargo llvm-cov', description: 'Run code coverage with cargo llvm-cov' },
                     { label: '---', kind: vscode.QuickPickItemKind.Separator },
                     { label: '$(arrow-left) Go Back', description: 'Return to command categories' }
                 ];
@@ -1478,11 +1427,11 @@ export function activate(context: vscode.ExtensionContext) {
                         case 'Delete Profile':
                             vscode.commands.executeCommand('rustcodepro.deleteProfile');
                             break;
+                        case 'Run cargo llvm-cov':
+                            vscode.commands.executeCommand('rustcodepro.rustLlvmCov');
+                            break;
                         case 'Switch Profile':
                             vscode.commands.executeCommand('rustcodepro.switchProfile');
-                            break;
-                        case 'Run cargo llvm-cov':
-                            vscode.commands.executeCommand('rustcodepro.rustCoverage');
                             break;
                     }
         
@@ -1528,6 +1477,36 @@ export function activate(context: vscode.ExtensionContext) {
         {
             command: 'rustcodepro.deleteProfile',
             callback: deleteProfile
+        },
+        {
+            command: 'rustcodepro.rustLlvmCov',
+            callback: async () => {
+                const toolInstalled = checkCargoLlvmCovInstalled();
+                if (!toolInstalled) {
+                    vscode.window.showErrorMessage('cargo-llvm-cov is not installed. Please install it with `cargo install cargo-llvm-cov`.');
+                    return;
+                }
+                const testTool = await vscode.window.showQuickPick(['cargo test', 'cargo nextest run'], {
+                    placeHolder: 'Select the test tool to use with cargo-llvm-cov'
+                });
+                if (!testTool) {
+                    vscode.window.showErrorMessage('No test tool selected.');
+                    return;
+                }
+                const editor = vscode.window.activeTextEditor;
+                if (!editor) {
+                    vscode.window.showErrorMessage('No active editor found.');
+                    return;
+                }
+                const projectDir = findCargoTomlDir(editor.document.uri.fsPath);
+                if (!projectDir) {
+                    vscode.window.showErrorMessage('Cargo.toml not found in the project.');
+                    return;
+                }
+                const additionalArgs = await showAdditionalOptions(testTool);
+                const llvmCovCommand = testTool === 'cargo nextest run' ? 'cargo llvm-cov nextest' : 'cargo llvm-cov test';
+                runTerminalCommand(llvmCovCommand, additionalArgs, terminal, projectDir);
+            }
         }
     ];
 
