@@ -1142,6 +1142,12 @@ export function activate(context: vscode.ExtensionContext) {
                     vscode.window.showErrorMessage('No test tool selected.');
                     return;
                 }
+
+                if (testTool === 'cargo nextest run' && !checkCargoNextestInstalled()) {
+                    vscode.window.showErrorMessage('cargo nextest is not installed. Please install it.');
+                    return;
+                }
+
                 const editor = vscode.window.activeTextEditor;
                 if (!editor) {
                     vscode.window.showErrorMessage('No active editor found.');
